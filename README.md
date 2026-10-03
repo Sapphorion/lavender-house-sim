@@ -10,8 +10,9 @@ Open `index.html` in a browser, or enable GitHub Pages for this repo (Settings �
 
 | Action | Desktop | Phone |
 | --- | --- | --- |
-| Look around | Click the view, then move the mouse (or drag) | Drag on the screen |
-| Move | `W` `A` `S` `D` / arrow keys, `Shift` to sprint | Joystick |
+| Look around | Move the mouse (the game grabs it when you move in; click the view to grab it again), or drag | Drag on the screen |
+| Move | `W` `A` `S` `D`, or `↑` `↓`; `Shift` to sprint | Joystick |
+| Turn without the mouse | `←` `→` | — |
 | Use an object or interact with a housemate | `E` | **Use** |
 | Chat with a housemate | `T` | **Talk** |
 | Stop what you're doing | Move, or `Space` | Move |
@@ -48,4 +49,8 @@ You create your own character: name, pronouns (including neopronouns or custom p
 
 ## Tech
 
-A single HTML file with [three.js](https://threejs.org/) r128 loaded from cdnjs. No build step.
+A single HTML file with [three.js](https://threejs.org/) r128 loaded from cdnjs. No build step. Rendering uses tone-mapped physically based materials, real-time sun shadows through the windows, a day–night sky, and static geometry merged into a few draw calls so it runs on laptops with integrated graphics.
+
+## License
+
+Copyright © 2026 Sapphorion. All rights reserved. See [LICENSE](LICENSE).
