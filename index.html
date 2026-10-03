@@ -1,0 +1,1317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Lavender House: a first-person queer life sim about chosen family.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Lavender House</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Gabarito:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: full-bleed 3D view, glass HUD panels pinned to the corners, a drawer for conversations. Single dark look by design. */
+:root{
+  --ink:#1b1430;
+  --glass:rgba(27,20,48,.80);
+  --glass-hi:rgba(44,33,74,.92);
+  --line:rgba(201,182,255,.22);
+  --paper:#f5efff;
+  --muted:#b3a6d1;
+  --lav:#c9b6ff;
+  --peach:#ffb38a;
+  --mint:#7fe0b8;
+  --rose:#ff8fb1;
+  --warn:#ff8a8a;
+  --display:"Bagel Fat One","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --ui:"Gabarito","Segoe UI",system-ui,-apple-system,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--ink);color:var(--paper);font-family:var(--ui);font-size:14px}
+#app{position:fixed;inset:0;overflow:hidden;user-select:none;-webkit-user-select:none}
+#view{display:block;width:100%;height:100%;touch-action:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.tag{position:absolute;left:0;top:0;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:4px;white-space:nowrap;will-change:transform}
+.tag .name{background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;display:flex;gap:6px;align-items:center}
+.tag .name small{color:var(--muted);font-weight:500}
+.tag .dot{width:8px;height:8px;border-radius:50%}
+.tag .act{font-size:11px;color:var(--paper);opacity:.85;text-shadow:0 1px 3px #000}
+.tag .bubble{background:var(--paper);color:var(--ink);border-radius:14px;padding:6px 11px;font-size:13px;max-width:240px;white-space:normal;text-align:center;line-height:1.3;box-shadow:0 4px 14px rgba(0,0,0,.35);position:relative}
+.tag .bubble::after{content:"";position:absolute;bottom:-6px;left:50%;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:var(--paper)}
+
+.panel{position:absolute;background:var(--glass);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#clockPanel{top:calc(14px + env(safe-area-inset-top,0px));left:calc(14px + env(safe-area-inset-left,0px));padding:10px 14px;display:grid;gap:4px}
+#clock{font-family:var(--display);font-size:30px;line-height:1;letter-spacing:.5px;font-variant-numeric:tabular-nums}
+#day{color:var(--muted);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.speed{display:flex;gap:4px;margin-top:4px}
+.speed button,.btn,.chip{font:inherit;color:var(--paper);background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer}
+.speed button[aria-pressed="true"]{background:var(--lav);color:var(--ink);border-color:var(--lav)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--peach);outline-offset:2px}
+
+#household{top:calc(14px + env(safe-area-inset-top,0px));right:calc(14px + env(safe-area-inset-right,0px));width:250px;padding:10px 12px}
+#household h3,#needsPanel h3{margin:0 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+#simList{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+#simList li{display:grid;grid-template-columns:14px 1fr auto;gap:2px 8px;align-items:center}
+#simList .sw{width:12px;height:12px;border-radius:50%;grid-row:span 2}
+#simList .nm{font-weight:600;min-width:0}
+#simList .nm small{color:var(--muted);font-weight:400;margin-left:4px}
+#simList .rl{font-size:11px;color:var(--lav);text-align:right}
+#simList .ac{grid-column:2 / span 2;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+#needsPanel{left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));width:280px;padding:10px 14px}
+#me{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+#me b{font-family:var(--display);font-weight:400;font-size:18px}
+#me span{color:var(--muted);font-size:12px}
+#me i{margin-left:auto;font-style:normal;font-size:12px;padding:1px 8px;border-radius:999px;color:var(--ink)}
+#needBars{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.need{display:grid;gap:3px;font-size:12px}
+.need .row{display:flex;justify-content:space-between;color:var(--muted)}
+.need .bar{height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.need .bar i{display:block;height:100%;border-radius:99px;transition:width .4s,background .4s}
+
+#log{right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));width:300px;padding:10px 12px;display:grid;gap:4px;font-size:12px}
+#log p{margin:0;color:var(--paper);opacity:.9;line-height:1.35}
+#log p time{color:var(--muted);font-variant-numeric:tabular-nums;margin-right:6px}
+
+#crosshair{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--paper);box-shadow:0 0 0 2px rgba(0,0,0,.35);opacity:.8;pointer-events:none}
+#prompt{position:absolute;left:50%;top:calc(50% + 26px);transform:translateX(-50%);background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;white-space:nowrap;pointer-events:none;display:flex;gap:12px}
+#prompt kbd,.menu kbd,#hint kbd{font-family:var(--ui);font-weight:700;background:var(--lav);color:var(--ink);border-radius:5px;padding:0 5px;margin-right:4px;font-size:12px}
+#hint{position:absolute;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font-size:12px;color:var(--muted);background:var(--glass);border-radius:999px;padding:5px 14px;white-space:nowrap;pointer-events:none}
+#actionBar{position:absolute;left:50%;bottom:calc(56px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(320px,80vw);background:var(--glass-hi);border:1px solid var(--line);border-radius:14px;padding:10px 14px;display:grid;gap:6px;text-align:center}
+#actionBar .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
+#actionBar .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--lav),var(--rose))}
+#actionBar small{color:var(--muted)}
+#sleepShade{position:absolute;inset:0;background:rgba(10,6,24,.72);display:grid;place-items:center;font-family:var(--display);font-size:28px;color:var(--lav);pointer-events:none}
+
+.menu{position:absolute;left:50%;top:calc(50% + 30px);transform:translateX(-50%);background:var(--glass-hi);border:1px solid var(--line);border-radius:16px;padding:12px;min-width:260px;display:grid;gap:6px}
+.menu h4{margin:0 0 4px;font-size:15px}
+.menu h4 small{color:var(--muted);font-weight:400;margin-left:6px}
+.menu p{margin:0 0 4px;color:var(--muted);font-size:12px}
+.menu button{font:inherit;text-align:left;color:var(--paper);background:rgba(255,255,255,.05);border:1px solid transparent;border-radius:10px;padding:7px 10px;cursor:pointer;display:flex;align-items:center}
+.menu button:hover{border-color:var(--line);background:rgba(255,255,255,.1)}
+.menu button[disabled]{opacity:.45;cursor:not-allowed}
+.menu button span{margin-left:auto;color:var(--muted);font-size:11px}
+
+#chat{position:absolute;top:0;right:0;bottom:0;width:min(400px,100%);background:var(--glass-hi);border-left:1px solid var(--line);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#chat header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+#chat header .sw{width:34px;height:34px;border-radius:50%;flex:none}
+#chat header div{min-width:0;flex:1}
+#chat header b{font-size:16px;display:block}
+#chat header small{color:var(--muted)}
+#chatLog{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px;user-select:text;-webkit-user-select:text}
+.msg{max-width:85%;padding:8px 12px;border-radius:14px;line-height:1.4;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.them{background:rgba(255,255,255,.08);border-bottom-left-radius:4px;align-self:flex-start}
+.msg.you{background:var(--lav);color:var(--ink);border-bottom-right-radius:4px;align-self:flex-end}
+.msg.sys{align-self:center;color:var(--muted);font-size:12px;background:none;text-align:center}
+#suggest{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 8px}
+#suggest .chip{font-size:12px}
+#chatForm{display:flex;gap:8px;padding:10px 16px 6px}
+#chatInput{flex:1;min-width:0;font:inherit;color:var(--paper);background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+#chatForm button,.primary{font:inherit;font-weight:700;color:var(--ink);background:var(--peach);border:0;border-radius:12px;padding:9px 16px;cursor:pointer}
+#chatForm button[disabled]{opacity:.5}
+#chatNote{margin:0;padding:0 16px 12px;font-size:11px;color:var(--muted)}
+
+#touch{position:absolute;inset:0;pointer-events:none}
+#stick{position:absolute;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px));width:110px;height:110px;border-radius:50%;border:1px solid var(--line);background:rgba(27,20,48,.35);pointer-events:auto;touch-action:none}
+#stick i{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:var(--lav);opacity:.8}
+#touchBtns{position:absolute;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(160px + env(safe-area-inset-bottom,0px));display:grid;gap:10px;pointer-events:auto}
+#touchBtns button{width:64px;height:64px;border-radius:50%;font:inherit;font-weight:700;color:var(--ink);background:var(--peach);border:0}
+#touchBtns button+button{background:var(--lav)}
+
+#start{position:absolute;inset:0;overflow-y:auto;background:radial-gradient(1200px 600px at 20% 0%,rgba(201,182,255,.25),transparent 60%),rgba(20,14,36,.82);display:flex;justify-content:center;padding:calc(28px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+.card{width:min(940px,100%);display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-content:start;margin:auto 0}
+.brand h1{font-family:var(--display);font-weight:400;font-size:clamp(40px,7vw,68px);line-height:.95;margin:0;letter-spacing:.5px;text-wrap:balance}
+.stripe{display:flex;height:8px;border-radius:99px;overflow:hidden;margin:14px 0 16px;width:220px}
+.stripe i{flex:1}
+.brand p{margin:0 0 18px;color:var(--muted);font-size:16px;line-height:1.5;max-width:46ch}
+.mates{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mate{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:grid;gap:3px;min-width:0}
+.mate b{display:flex;gap:6px;align-items:center}
+.mate b i{width:10px;height:10px;border-radius:50%}
+.mate small{color:var(--lav)}
+.mate span{color:var(--muted);font-size:12px;line-height:1.4}
+form.create{background:var(--glass-hi);border:1px solid var(--line);border-radius:20px;padding:20px;display:grid;gap:14px;align-content:start}
+form.create h2{margin:0;font-size:18px}
+form.create label{display:grid;gap:5px;font-size:12px;color:var(--muted);letter-spacing:.04em}
+form.create input,form.create select,form.create textarea{font:inherit;font-size:14px;color:var(--paper);background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:10px;padding:9px 11px;resize:vertical}
+form.create select option{background:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.flags{display:flex;flex-wrap:wrap;gap:8px}
+.flags button{width:44px;height:28px;border-radius:6px;border:2px solid transparent;padding:0;cursor:pointer;overflow:hidden;background:none}
+.flags button[aria-pressed="true"]{border-color:var(--paper);box-shadow:0 0 0 2px var(--lav)}
+.flags canvas{display:block;width:100%;height:100%}
+#flagName{color:var(--paper);font-size:12px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.ghost{font:inherit;color:var(--paper);background:transparent;border:1px solid var(--line);border-radius:12px;padding:9px 14px;cursor:pointer}
+.fine{margin:0;font-size:11px;color:var(--muted);line-height:1.45}
+
+@media (max-width:760px){
+  .card{grid-template-columns:1fr}
+  #household{width:auto;left:calc(14px + env(safe-area-inset-left,0px));top:calc(112px + env(safe-area-inset-top,0px));right:auto;padding:8px 10px}
+  #household h3,#simList .ac,#simList .rl{display:none}
+  #simList{display:flex;gap:10px}
+  #simList li{display:flex;gap:5px}
+  #needsPanel{width:auto;right:calc(14px + env(safe-area-inset-right,0px));padding:8px 12px}
+  #needBars{grid-template-columns:repeat(3,1fr);gap:4px 10px}
+  #log{display:none}
+  #hint{display:none}
+  .mates{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div id="app">
+  <canvas id="view" aria-label="First-person view of Lavender House"></canvas>
+  <div id="labels"></div>
+
+  <div id="hud" hidden>
+    <div id="clockPanel" class="panel">
+      <div id="clock">08:00</div>
+      <div id="day">Day 1 · Morning</div>
+      <div class="speed" role="group" aria-label="Game speed">
+        <button type="button" data-speed="0" aria-pressed="false">Pause</button>
+        <button type="button" data-speed="1" aria-pressed="true">1×</button>
+        <button type="button" data-speed="2" aria-pressed="false">3×</button>
+        <button type="button" data-speed="3" aria-pressed="false">8×</button>
+      </div>
+    </div>
+    <div id="household" class="panel"><h3>Chosen family</h3><ul id="simList"></ul></div>
+    <div id="crosshair"></div>
+    <div id="prompt" hidden></div>
+    <div id="needsPanel" class="panel">
+      <div id="me"><b id="meName">You</b><span id="mePron"></span><i id="meMood">Fine</i></div>
+      <div id="needBars"></div>
+    </div>
+    <div id="log" class="panel" aria-live="polite"></div>
+    <div id="actionBar" hidden><span id="actionText"></span><div class="bar"><i id="actionFill"></i></div><small>Move to stop</small></div>
+    <div id="interactMenu" class="menu" hidden></div>
+    <div id="hint">Click to look around · <kbd>WASD</kbd>move · <kbd>E</kbd>use · <kbd>T</kbd>talk · <kbd>Esc</kbd>free mouse</div>
+    <div id="touch" hidden>
+      <div id="stick"><i></i></div>
+      <div id="touchBtns"><button type="button" id="tUse">Use</button><button type="button" id="tTalk">Talk</button></div>
+    </div>
+  </div>
+  <div id="sleepShade" hidden>Sleeping…</div>
+
+  <aside id="chat" hidden aria-label="Conversation">
+    <header>
+      <span class="sw" id="chatSw"></span>
+      <div><b id="chatName"></b><small id="chatMeta"></small></div>
+      <button type="button" class="ghost" id="chatClose">Done</button>
+    </header>
+    <div id="chatLog"></div>
+    <div id="suggest"></div>
+    <form id="chatForm" autocomplete="off">
+      <input id="chatInput" maxlength="400" placeholder="Say something…" aria-label="Your message">
+      <button type="submit" id="chatSend">Send</button>
+    </form>
+    <p id="chatNote"></p>
+  </aside>
+
+  <div id="start">
+    <div class="card">
+      <div class="brand">
+        <h1>Lavender<br>House</h1>
+        <div class="stripe" id="brandStripe"></div>
+        <p>A first-person life sim about chosen family. You've just moved into a queer share house in Gqeberha. Four housemates already live here, with their own needs, moods, routines and opinions. They'll get on with their lives whether you're watching or not, and they'll talk back when you talk to them.</p>
+        <div class="mates" id="mates"></div>
+      </div>
+      <form class="create" id="createForm">
+        <h2>Who's moving in?</h2>
+        <label for="pName">Name
+          <input id="pName" maxlength="24" value="Sam" required>
+        </label>
+        <div class="two">
+          <label for="pPron">Pronouns
+            <select id="pPron">
+              <option>they/them</option><option>she/her</option><option>he/him</option>
+              <option>she/they</option><option>he/they</option><option>xe/xem</option>
+              <option>any pronouns</option><option value="custom">Custom…</option>
+            </select>
+          </label>
+          <label for="pGender">Gender
+            <select id="pGender">
+              <option value="nonbinary">Nonbinary</option><option value="woman">Woman</option><option value="man">Man</option>
+              <option value="genderfluid">Genderfluid</option><option value="agender">Agender</option>
+              <option value="questioning">Questioning</option><option value="unsaid">Rather not say</option>
+            </select>
+          </label>
+        </div>
+        <label for="pPronCustom" id="customWrap" hidden>Your pronouns
+          <input id="pPronCustom" maxlength="24" placeholder="e.g. fae/faer">
+        </label>
+        <label for="pAbout">About you (optional, your housemates will know this)
+          <textarea id="pAbout" rows="2" maxlength="220" placeholder="e.g. Trans lesbian, just moved from Joburg, works nights at a community radio station"></textarea>
+        </label>
+        <div>
+          <label id="flagLabel">Flag for the garden pole · <span id="flagName"></span></label>
+          <div class="flags" id="flags" role="group" aria-labelledby="flagLabel"></div>
+        </div>
+        <div class="actions">
+          <button type="submit" class="primary" id="moveIn">Move in</button>
+          <button type="button" class="ghost" id="continueBtn" hidden></button>
+        </div>
+        <p class="fine">Housemates reply with live AI when you chat; the first message asks your permission. If it's off, they use built-in lines. Your game saves in this browser.</p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const R = n => Math.random() * n;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+/* ================= WORLD MAP ================= */
+const MAP = [
+  "####################",
+  "#gggggggggggggggggg#",
+  "#gggggggggggggggggg#",
+  "#gggggggggggggggggg#",
+  "####.######.########",
+  "#kkkkkk#lllllllllll#",
+  "#kkkkkk#lllllllllll#",
+  "#kkkkkk.lllllllllll#",
+  "#kkkkkk#lllllllllll#",
+  "#kkkkkk#lllllllllll#",
+  "####.######.########",
+  "#hhhhhhhhhhhhhhhhhh#",
+  "#hhhhhhhhhhhhhhhhhh#",
+  "##.#####.######.####",
+  "#ssss#aaaaaa#cccccc#",
+  "#ssss#aaaaaa#cccccc#",
+  "#ssss#aaaaaa#cccccc#",
+  "#ssss#aaaaaa#cccccc#",
+  "####################"
+];
+const GW = 20, GH = MAP.length, T = 1.6, WH = 2.8;
+const ROOMS = { g: 'garden', k: 'kitchen', l: 'living room', h: 'hallway', s: 'bathroom', a: "Thandi and Mia's room", c: 'shared bedroom' };
+const key = (x, y) => x + ',' + y;
+const cell = (x, y) => (y >= 0 && y < GH && x >= 0 && x < GW) ? MAP[y][x] : '#';
+const isWall = (x, y) => cell(x, y) === '#';
+const blocked = new Set();
+const walkable = (x, y) => !isWall(x, y) && !blocked.has(key(x, y));
+const tc = v => (v + 0.5) * T;
+const toTile = v => Math.floor(v / T);
+function roomAt(x, y) {
+  const c = cell(x, y);
+  if (c === '.') { for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) { const n = cell(x + dx, y + dy); if (n !== '#' && n !== '.') return n; } }
+  return c;
+}
+
+/* ================= FLAGS ================= */
+const FLAGS = {
+  progress: { name: 'Progress Pride', stripes: ['#e40303', '#ff8c00', '#ffed00', '#008026', '#24408e', '#732982'], progress: true },
+  rainbow: { name: 'Rainbow', stripes: ['#e40303', '#ff8c00', '#ffed00', '#008026', '#24408e', '#732982'] },
+  trans: { name: 'Transgender', stripes: ['#5bcefa', '#f5a9b8', '#ffffff', '#f5a9b8', '#5bcefa'] },
+  nonbinary: { name: 'Nonbinary', stripes: ['#fcf434', '#ffffff', '#9c59d1', '#2c2c2c'] },
+  lesbian: { name: 'Lesbian', stripes: ['#d52d00', '#ef7627', '#ff9a56', '#ffffff', '#d162a4', '#b55690', '#a30262'] },
+  gay: { name: 'Gay men', stripes: ['#078d70', '#26ceaa', '#98e8c1', '#ffffff', '#7bade2', '#5049cc', '#3d1a78'] },
+  bi: { name: 'Bisexual', stripes: ['#d60270', '#d60270', '#9b4f96', '#0038a8', '#0038a8'] },
+  pan: { name: 'Pansexual', stripes: ['#ff218c', '#ffd800', '#21b1ff'] },
+  ace: { name: 'Asexual', stripes: ['#000000', '#a3a3a3', '#ffffff', '#800080'] },
+  aro: { name: 'Aromantic', stripes: ['#3da542', '#a7d379', '#ffffff', '#a9a9a9', '#000000'] },
+  intersex: { name: 'Intersex', intersex: true },
+  genderfluid: { name: 'Genderfluid', stripes: ['#ff76a4', '#ffffff', '#c011d7', '#000000', '#2f3cbe'] }
+};
+function drawFlag(ctx, w, h, id) {
+  const f = FLAGS[id];
+  if (f.intersex) {
+    ctx.fillStyle = '#ffd800'; ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#7902aa'; ctx.lineWidth = h * 0.09;
+    ctx.beginPath(); ctx.arc(w / 2, h / 2, h * 0.24, 0, Math.PI * 2); ctx.stroke(); return;
+  }
+  const n = f.stripes.length;
+  f.stripes.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(0, Math.floor(i * h / n), w, Math.ceil(h / n) + 1); });
+  if (f.progress) {
+    const cols = ['#000000', '#784f17', '#5bcefa', '#f5a9b8', '#ffffff'];
+    const step = h * 0.085;
+    cols.forEach((c, i) => {
+      const off = (cols.length - i) * step;
+      ctx.fillStyle = c; ctx.beginPath();
+      ctx.moveTo(0, 0); ctx.lineTo(off + h * 0.12, 0); ctx.lineTo(off + h * 0.12 + h / 2, h / 2); ctx.lineTo(off + h * 0.12, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+    });
+    ctx.fillStyle = '#ffd800'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(h * 0.12, 0); ctx.lineTo(h * 0.12 + h / 2, h / 2); ctx.lineTo(h * 0.12, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#7902aa'; ctx.lineWidth = h * 0.035; ctx.beginPath(); ctx.arc(h * 0.3, h / 2, h * 0.11, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+
+/* ================= HOUSEMATES ================= */
+const SIM_DEFS = [
+  { id: 'thandi', name: 'Thandi', full: 'Thandi Mokoena', pron: 'she/her', gender: 'woman', job: 'an ER nurse at the provincial hospital',
+    bio: "A trans woman and a lesbian. Thandi is the steady one: warm, organised, quietly funny, and the person everyone calls in a crisis. She and Mia have been together three years.",
+    short: 'Trans lesbian ER nurse. The steady one.',
+    traits: ['caring', 'early bird', 'bookworm'], likes: { read: 1.6, tea: 1.5, garden: 1.3 }, socialRate: 1.0, bedtime: 21.5,
+    partner: 'mia', romanceOpen: [], shirt: '#3fa7a0', pants: '#2d3550', skin: '#6b4430', hair: '#1c1412', hairStyle: 'bun', start: [3, 7], relP: 12 },
+  { id: 'mia', name: 'Mia', full: 'Mia van Wyk', pron: 'she/her', gender: 'woman', job: 'a line cook who dreams of opening her own bistro',
+    bio: "Bisexual, loud-laughing and always feeding people. Mia turns any evening into a braai if you let her, and she was the one who said yes to your room application.",
+    short: 'Bi chef. Will feed you.',
+    traits: ['foodie', 'cheerful', 'social butterfly'], likes: { cook: 1.8, dance: 1.5, tea: 1.1 }, socialRate: 1.4, bedtime: 23,
+    partner: 'thandi', romanceOpen: [], shirt: '#ff8f6b', pants: '#3a3a5c', skin: '#f1c7a5', hair: '#d9a441', hairStyle: 'long', start: [2, 6], relP: 22 },
+  { id: 'ren', name: 'Ren', full: 'Ren Adeyemi', pron: 'they/them', gender: 'nonbinary', job: 'a painter and part-time barista',
+    bio: "Nonbinary, pansexual and proudly both. Ren paints huge loud canvases, keeps vampire hours, and asks the questions everyone else is avoiding. Currently single.",
+    short: 'Nonbinary pan painter. Night owl.',
+    traits: ['creative', 'night owl', 'thoughtful'], likes: { paint: 2.0, drink: 1.3, mirror: 1.3, dance: 1.2 }, socialRate: 1.0, bedtime: 1.5,
+    partner: null, romanceOpen: ['woman', 'man', 'nonbinary', 'genderfluid', 'agender', 'questioning', 'unsaid'], shirt: '#9b7bff', pants: '#2b2440', skin: '#8a5a3c', hair: '#2a1a12', hairStyle: 'curls', start: [9, 7], relP: 8 },
+  { id: 'kai', name: 'Kai', full: 'Kai Naidoo', pron: 'he/him', gender: 'man', job: 'a QA tester at a small game studio',
+    bio: "A gay man with a very dry sense of humour. Kai is shy with new people, fiercely loyal once you're in, and dangerously competitive at racing games. Currently single.",
+    short: 'Gay gamer. Shy, then loyal.',
+    traits: ['gamer', 'introvert', 'funny'], likes: { games: 2.0, read: 1.1 }, socialRate: 0.7, bedtime: 0.5,
+    partner: null, romanceOpen: ['man'], shirt: '#ffd45e', pants: '#233041', skin: '#a8754f', hair: '#141010', hairStyle: 'short', start: [15, 7], relP: 4 }
+];
+const START_RELS = { 'thandi|mia': 92, 'ren|kai': 64, 'thandi|ren': 45, 'thandi|kai': 50, 'mia|ren': 48, 'mia|kai': 40 };
+const relKey = (a, b) => [a, b].sort((x, y) => SIM_DEFS.findIndex(d => d.id === x) - SIM_DEFS.findIndex(d => d.id === y)).join('|');
+
+/* ================= NEEDS ================= */
+const NEEDS = ['hunger', 'energy', 'bladder', 'hygiene', 'fun', 'social'];
+const NEED_LABEL = { hunger: 'Hunger', energy: 'Energy', bladder: 'Bladder', hygiene: 'Hygiene', fun: 'Fun', social: 'Social' };
+const DECAY = { hunger: 0.10, energy: 0.065, bladder: 0.13, hygiene: 0.05, fun: 0.09, social: 0.075 };
+const LOW_WORD = { hunger: 'hungry', energy: 'tired', bladder: 'desperate for the loo', hygiene: 'grubby and in need of a shower', fun: 'bored', social: 'lonely' };
+const fU = x => { x = clamp(x, 0, 100); const d = (100 - x) / 100; return 100 * (1 - d * d); };
+function gainValue(needs, ads) { let v = 0; for (const n in ads) v += fU(needs[n] + ads[n]) - fU(needs[n]); return v; }
+function moodOf(needs) { let s = 0, m = 100; for (const n of NEEDS) { s += needs[n]; m = Math.min(m, needs[n]); } return 0.6 * (s / NEEDS.length) + 0.4 * m; }
+function moodLabel(v) { return v >= 70 ? 'Great' : v >= 50 ? 'Fine' : v >= 30 ? 'Uneasy' : 'Miserable'; }
+function moodColor(v) { return v >= 70 ? '#7fe0b8' : v >= 50 ? '#c9b6ff' : v >= 30 ? '#ffb38a' : '#ff8a8a'; }
+function needColor(v) { return v >= 60 ? '#7fe0b8' : v >= 35 ? '#ffd47a' : '#ff8a8a'; }
+function relLabel(v, partner) {
+  if (partner) return 'Partner';
+  return v >= 80 ? 'Best friend' : v >= 55 ? 'Close friend' : v >= 30 ? 'Friend' : v >= 12 ? 'Acquaintance' : v > -10 ? 'Just met' : 'Tense';
+}
+function romLabel(r) { return r >= 60 ? 'Dating' : r >= 25 ? 'Crush' : ''; }
+
+/* ================= THREE SETUP ================= */
+const canvas = $('#view');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xbfe3ff, 25, 70);
+const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 200);
+camera.rotation.order = 'YXZ';
+const hemi = new THREE.HemisphereLight(0xffffff, 0x6a5a80, 0.8); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 0.6); sun.position.set(10, 30, -10); scene.add(sun);
+const lamps = [];
+[[4, 7], [13, 7], [10, 11.5], [2.5, 15.5], [8.5, 15.5], [15.5, 15.5]].forEach(([x, y]) => {
+  const L = new THREE.PointLight(0xffd9a8, 0.4, 9, 1.6); L.position.set(tc(x), WH - 0.3, tc(y)); scene.add(L); lamps.push(L);
+});
+
+const matCache = {};
+function mat(c, extra) { const k = c + (extra ? JSON.stringify(extra) : ''); return matCache[k] || (matCache[k] = new THREE.MeshLambertMaterial(Object.assign({ color: c }, extra || {}))); }
+function bx(g, w, h, d, c, x, y, z) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), typeof c === 'string' ? mat(c) : c); m.position.set(x, y, z); g.add(m); return m; }
+function cy(g, rt, rb, h, c, x, y, z, seg) { const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 14), typeof c === 'string' ? mat(c) : c); m.position.set(x, y, z); g.add(m); return m; }
+function sp(g, r, c, x, y, z) { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), typeof c === 'string' ? mat(c) : c); m.position.set(x, y, z); g.add(m); return m; }
+function canvasTex(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return new THREE.CanvasTexture(c); }
+
+/* floors */
+function noiseFill(ctx, w, h, base, spread, n) { ctx.fillStyle = base; ctx.fillRect(0, 0, w, h); for (let i = 0; i < n; i++) { ctx.fillStyle = spread[i % spread.length]; ctx.globalAlpha = 0.25; ctx.fillRect(R(w), R(h), 1 + R(3), 1 + R(3)); } ctx.globalAlpha = 1; }
+const FLOOR = {
+  g: canvasTex(64, 64, (c, w, h) => noiseFill(c, w, h, '#6fae63', ['#88c475', '#5a9450', '#9bd17f'], 500)),
+  k: canvasTex(64, 64, (c, w, h) => { c.fillStyle = '#efe7fb'; c.fillRect(0, 0, w, h); c.fillStyle = '#b9a8de'; c.fillRect(0, 0, 32, 32); c.fillRect(32, 32, 32, 32); }),
+  l: canvasTex(64, 64, (c, w, h) => { for (let i = 0; i < 4; i++) { c.fillStyle = ['#a8784e', '#b58457', '#9c6f48', '#b07d52'][i]; c.fillRect(0, i * 16, w, 16); c.fillStyle = '#7d5638'; c.fillRect(0, i * 16, w, 1); c.fillRect((i * 23) % 64, i * 16, 1, 16); } }),
+  h: canvasTex(64, 64, (c, w, h) => { for (let i = 0; i < 4; i++) { c.fillStyle = ['#c49a6c', '#b88f63', '#c8a174', '#bd9467'][i]; c.fillRect(0, i * 16, w, 16); c.fillStyle = '#8f6a47'; c.fillRect(0, i * 16, w, 1); } }),
+  s: canvasTex(64, 64, (c, w, h) => { c.fillStyle = '#f2f6f8'; c.fillRect(0, 0, w, h); c.fillStyle = '#c3d6df'; for (let i = 0; i <= 64; i += 16) { c.fillRect(i, 0, 1, h); c.fillRect(0, i, w, 1); } }),
+  a: canvasTex(64, 64, (c, w, h) => noiseFill(c, w, h, '#d99bb4', ['#e8b2c7', '#c98aa3'], 400)),
+  c: canvasTex(64, 64, (c, w, h) => noiseFill(c, w, h, '#8fa3c9', ['#a5b7d9', '#7d91b8'], 400))
+};
+const floorGeo = new THREE.PlaneGeometry(T, T); floorGeo.rotateX(-Math.PI / 2);
+const floorMats = {}; for (const k in FLOOR) floorMats[k] = new THREE.MeshLambertMaterial({ map: FLOOR[k] });
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), mat('#5f9a57')); ground.rotation.x = -Math.PI / 2; ground.position.set(GW * T / 2, -0.02, GH * T / 2); scene.add(ground);
+
+const wallMeshes = [];
+const wallGeo = new THREE.BoxGeometry(T, WH, T);
+const fenceGeo = new THREE.BoxGeometry(T, 1.0, 0.18);
+const wallMat = mat('#e4daf5'), wallOut = mat('#cdb9ef'), fenceMat = mat('#f3efe6');
+for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+  const c = cell(x, y);
+  if (c === '#') {
+    const isFence = y < 4;
+    if (isFence) {
+      const m = new THREE.Mesh(fenceGeo, fenceMat); m.position.set(tc(x), 0.5, tc(y));
+      if (x === 0 || x === GW - 1) m.rotation.y = Math.PI / 2;
+      scene.add(m); wallMeshes.push(m);
+    } else {
+      const outer = x === 0 || x === GW - 1 || y === GH - 1 || y === 4;
+      const m = new THREE.Mesh(wallGeo, outer ? wallOut : wallMat); m.position.set(tc(x), WH / 2, tc(y)); scene.add(m); wallMeshes.push(m);
+    }
+  } else {
+    let r = roomAt(x, y); if (c === '.') r = r === 'g' ? 'h' : (r === 'k' || r === 's' ? r : 'l');
+    const m = new THREE.Mesh(floorGeo, floorMats[r] || floorMats.l); m.position.set(tc(x), 0, tc(y)); scene.add(m);
+  }
+}
+const ceil = new THREE.Mesh(new THREE.PlaneGeometry(GW * T, (GH - 4) * T), mat('#f7f3ff', { side: THREE.DoubleSide }));
+ceil.rotation.x = Math.PI / 2; ceil.position.set(GW * T / 2, WH, (4 + (GH - 4) / 2) * T); scene.add(ceil);
+// a roof cap so the house reads from the garden
+const roof = new THREE.Mesh(new THREE.BoxGeometry(GW * T + 0.4, 0.3, (GH - 4) * T + 0.4), mat('#5b4a86'));
+roof.position.set(GW * T / 2, WH + 0.16, (4 + (GH - 4) / 2) * T); scene.add(roof);
+
+/* ================= OBJECTS ================= */
+const N = Math.PI, S = 0;
+const OBJECTS = [
+  { id: 'fridge', kind: 'fridge', name: 'Fridge', tiles: [[1, 5]], off: [0, -0.3], slots: [{ t: [1, 6] }], verb: 'Grab a snack', ing: 'Grabbing a snack', ads: { hunger: 35 }, dur: 15, tags: ['food'] },
+  { id: 'stove', kind: 'stove', name: 'Stove', tiles: [[2, 5]], off: [0, -0.3], slots: [{ t: [2, 6] }], verb: 'Cook a proper meal', ing: 'Cooking', ads: { hunger: 80, fun: 8 }, dur: 50, tags: ['cook'] },
+  { id: 'ksink', kind: 'sink', tiles: [[3, 5]], off: [0, -0.3] },
+  { id: 'coffee', kind: 'coffee', name: 'Coffee machine', tiles: [[5, 5]], off: [0, -0.3], slots: [{ t: [5, 6] }], verb: 'Brew a coffee', ing: 'Brewing coffee', ads: { energy: 22, fun: 5, bladder: -8 }, dur: 10, tags: ['drink'] },
+  { id: 'counter', kind: 'counter', tiles: [[6, 5]], off: [0, -0.3] },
+  { id: 'table', kind: 'table', name: 'Kitchen table', tiles: [[2, 8], [3, 8]], slots: [{ t: [2, 7] }, { t: [3, 7] }, { t: [2, 9] }, { t: [3, 9] }], verb: 'Sip rooibos at the table', ing: 'Sipping rooibos', ads: { social: 10, fun: 8, energy: 6, bladder: -6 }, dur: 20, tags: ['tea'] },
+  { id: 'tv', kind: 'tv', name: 'TV', tiles: [[13, 5]], off: [0, -0.35] },
+  { id: 'sofa', kind: 'sofa', name: 'Sofa', tiles: [[12, 8], [13, 8], [14, 8]], slots: [{ t: [12, 7], snap: [12, 8], face: N, pose: 'sit' }, { t: [13, 7], snap: [13, 8], face: N, pose: 'sit' }, { t: [14, 7], snap: [14, 8], face: N, pose: 'sit' }], verb: 'Watch a queer rom-com', ing: 'Watching TV', ads: { fun: 45, energy: 4 }, dur: 60, tags: ['tv'] },
+  { id: 'books', kind: 'bookshelf', name: 'Bookshelf', tiles: [[18, 5]], off: [0.2, -0.3], slots: [{ t: [18, 6] }], verb: 'Read a novel', ing: 'Reading', ads: { fun: 30 }, dur: 45, tags: ['read'] },
+  { id: 'console', kind: 'console', name: 'Game console', tiles: [[16, 9]], off: [0, 0.3], slots: [{ t: [16, 8] }], verb: 'Play racing games', ing: 'Gaming', ads: { fun: 55, social: -4 }, dur: 50, tags: ['games'] },
+  { id: 'easel', kind: 'easel', name: 'Easel', tiles: [[8, 5]], slots: [{ t: [8, 6] }], verb: 'Paint on the canvas', ing: 'Painting', ads: { fun: 50, hygiene: -6 }, dur: 60, tags: ['paint'] },
+  { id: 'stereo', kind: 'stereo', name: 'Speaker', tiles: [[18, 9]], off: [0.25, 0.25], slots: [{ t: [17, 9] }, { t: [18, 8] }], verb: 'Dance to amapiano', ing: 'Dancing', ads: { fun: 38, energy: -6, social: 6, hygiene: -6 }, dur: 25, tags: ['dance'], pose: 'dance' },
+  { id: 'lplant', kind: 'plant', tiles: [[8, 9]] },
+  { id: 'veg', kind: 'planter', name: 'Veggie patch', tiles: [[2, 1], [3, 1]], off: [0, -0.2], slots: [{ t: [2, 2] }, { t: [3, 2] }], verb: 'Tend the veggie patch', ing: 'Gardening', ads: { fun: 30, hygiene: -10 }, dur: 40, tags: ['garden'] },
+  { id: 'bench', kind: 'bench', name: 'Garden bench', tiles: [[7, 1], [8, 1]], slots: [{ t: [7, 2], snap: [7, 1], face: S, pose: 'sit' }, { t: [8, 2], snap: [8, 1], face: S, pose: 'sit' }], verb: 'Soak up the sun', ing: 'Sitting in the sun', ads: { energy: 10, fun: 18 }, dur: 30, tags: ['sun'] },
+  { id: 'tree', kind: 'tree', tiles: [[12, 1]] },
+  { id: 'braai', kind: 'braai', name: 'Braai', tiles: [[15, 1]], slots: [{ t: [15, 2] }], verb: 'Light the braai', ing: 'Braaiing', ads: { hunger: 65, fun: 20, social: 6 }, dur: 60, tags: ['cook'] },
+  { id: 'flag', kind: 'flag', name: 'Flagpole', tiles: [[18, 1]] },
+  { id: 'toilet', kind: 'toilet', name: 'Toilet', tiles: [[1, 17]], off: [0, 0.2], slots: [{ t: [1, 16], snap: [1, 17], face: N, pose: 'sit' }], verb: 'Use the toilet', ing: 'In the bathroom', ads: { bladder: 100 }, dur: 8, tags: ['toilet'], private: true },
+  { id: 'shower', kind: 'shower', name: 'Shower', tiles: [[4, 17]], slots: [{ t: [4, 16], snap: [4, 17], face: N }], verb: 'Take a shower', ing: 'Showering', ads: { hygiene: 100, energy: 4 }, dur: 20, tags: ['shower'], private: true },
+  { id: 'bsink', kind: 'sink', tiles: [[4, 14]], off: [0.25, 0], rot: -Math.PI / 2 },
+  { id: 'mirror', kind: 'mirror', name: 'Hall mirror', tiles: [[10, 11]], noBlock: true, slots: [{ t: [10, 11], face: N }], verb: 'Give yourself a pep talk', ing: 'Pep-talking the mirror', ads: { fun: 10, social: 12 }, dur: 10, tags: ['mirror'] },
+  { id: 'hplant', kind: 'plant', tiles: [[18, 11]] },
+  { id: 'dbed', kind: 'dbed', name: "Thandi & Mia's bed", tiles: [[9, 16], [10, 16], [9, 17], [10, 17]], slots: [{ t: [8, 16], snap: [9, 16.5], face: S, pose: 'lie', owner: 'thandi' }, { t: [11, 16], snap: [10, 16.5], face: S, pose: 'lie', owner: 'mia' }], verb: 'Sleep', ing: 'Sleeping', ads: { energy: 100 }, dur: 420, tags: ['sleep'], private: true, color: '#e58fb2' },
+  { id: 'desk', kind: 'desk', name: 'Writing desk', tiles: [[6, 17]], slots: [{ t: [6, 16] }], verb: 'Write in a journal', ing: 'Journaling', ads: { fun: 22 }, dur: 30, tags: ['read'] },
+  { id: 'bedRen', kind: 'bed', name: "Ren's bed", tiles: [[13, 16], [13, 17]], slots: [{ t: [14, 16], snap: [13, 16.5], face: S, pose: 'lie', owner: 'ren' }], verb: 'Sleep', ing: 'Sleeping', ads: { energy: 100 }, dur: 420, tags: ['sleep'], private: true, color: '#9b7bff' },
+  { id: 'futon', kind: 'futon', name: 'Your futon', tiles: [[15, 17], [16, 17]], slots: [{ t: [15, 16], snap: [15.5, 17], face: S, pose: 'lie', owner: 'player' }], verb: 'Sleep on your futon', ing: 'Sleeping', ads: { energy: 100 }, dur: 420, tags: ['sleep'], private: true, color: '#ffb38a' },
+  { id: 'bedKai', kind: 'bed', name: "Kai's bed", tiles: [[18, 16], [18, 17]], slots: [{ t: [17, 16], snap: [18, 16.5], face: S, pose: 'lie', owner: 'kai' }], verb: 'Sleep', ing: 'Sleeping', ads: { energy: 100 }, dur: 420, tags: ['sleep'], private: true, color: '#ffd45e' },
+  { id: 'wardrobe', kind: 'wardrobe', tiles: [[11, 14]], off: [0.2, -0.2] }
+];
+const interactables = [];
+let flagMesh = null, tvScreen = null, consoleScreen = null;
+
+function buildObject(o) {
+  const g = new THREE.Group();
+  const xs = o.tiles.map(t => t[0]), ys = o.tiles.map(t => t[1]);
+  const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
+  const w = (maxx - minx + 1) * T, d = (maxy - miny + 1) * T;
+  const ax = ((minx + maxx) / 2 + 0.5) * T + (o.off ? o.off[0] * T : 0), az = ((miny + maxy) / 2 + 0.5) * T + (o.off ? o.off[1] * T : 0);
+  g.position.set(ax, 0, az); if (o.rot) g.rotation.y = o.rot;
+  o.ax = ax; o.az = az;
+  const k = o.kind;
+  if (k === 'fridge') { bx(g, 0.9, 2.0, 0.75, '#e9eef2', 0, 1.0, 0); bx(g, 0.92, 0.02, 0.77, '#c8d0d8', 0, 1.35, 0); bx(g, 0.05, 0.5, 0.05, '#9aa3ad', 0.33, 1.65, 0.4); bx(g, 0.05, 0.4, 0.05, '#9aa3ad', 0.33, 1.0, 0.4); bx(g, 0.18, 0.12, 0.01, '#ff8fb1', -0.15, 1.6, 0.38); bx(g, 0.14, 0.14, 0.01, '#7fe0b8', 0.05, 1.75, 0.38); }
+  else if (k === 'stove') { bx(g, 1.0, 0.9, 0.75, '#3b3f4a', 0, 0.45, 0); bx(g, 1.02, 0.04, 0.77, '#1d1f26', 0, 0.92, 0); [[-.25, -.18], [.25, -.18], [-.25, .18], [.25, .18]].forEach(([x, z]) => cy(g, 0.11, 0.11, 0.02, '#555a66', x, 0.95, z)); bx(g, 0.8, 0.45, 0.02, '#22252d', 0, 0.4, 0.38); cy(g, 0.16, 0.14, 0.18, '#c0583b', 0.25, 1.05, 0.18); }
+  else if (k === 'counter' || k === 'sink' || k === 'coffee') {
+    bx(g, T * 0.98, 0.9, 0.75, '#c7b3e8', 0, 0.45, 0); bx(g, T, 0.05, 0.78, '#f4efe6', 0, 0.92, 0);
+    if (k === 'sink') { bx(g, 0.6, 0.03, 0.42, '#8fa4b8', 0, 0.955, 0); cy(g, 0.025, 0.025, 0.3, '#b9c2cc', 0, 1.1, -0.25); }
+    if (k === 'coffee') { bx(g, 0.32, 0.42, 0.3, '#2a2a2a', -0.2, 1.15, -0.1); cy(g, 0.06, 0.05, 0.1, '#ff8f6b', 0.2, 1.0, 0.1); cy(g, 0.06, 0.05, 0.1, '#9b7bff', 0.38, 1.0, 0.05); }
+    if (k === 'counter') { cy(g, 0.12, 0.1, 0.25, '#7fe0b8', 0.2, 1.07, 0); sp(g, 0.1, '#e8c35a', -0.2, 1.0, 0.05); }
+  }
+  else if (k === 'table') { bx(g, w * 0.9, 0.06, T * 0.8, '#b07a4f', 0, 0.76, 0); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => bx(g, 0.07, 0.74, 0.07, '#8a5d3a', sx * w * 0.4, 0.37, sz * T * 0.33)); cy(g, 0.12, 0.08, 0.06, '#f5efff', 0, 0.82, 0); cy(g, 0.05, 0.05, 0.12, '#c9b6ff', 0.4, 0.85, 0.1); }
+  else if (k === 'tv') { bx(g, 1.4, 0.5, 0.45, '#4a3b5c', 0, 0.25, 0); bx(g, 1.5, 0.85, 0.06, '#111', 0, 1.0, 0); tvScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.76), new THREE.MeshBasicMaterial({ color: 0x0b0b12 })); tvScreen.position.set(0, 1.0, 0.035); g.add(tvScreen); }
+  else if (k === 'sofa') { bx(g, w * 0.95, 0.42, 0.95, '#7d5fd1', 0, 0.21, 0.05); bx(g, w * 0.95, 0.6, 0.25, '#6a4fbf', 0, 0.62, 0.42); bx(g, 0.22, 0.6, 0.95, '#6a4fbf', -w * 0.46, 0.4, 0.05); bx(g, 0.22, 0.6, 0.95, '#6a4fbf', w * 0.46, 0.4, 0.05); bx(g, 0.45, 0.3, 0.12, '#ffb38a', -w * 0.3, 0.6, 0.3); bx(g, 0.45, 0.3, 0.12, '#7fe0b8', w * 0.3, 0.6, 0.3); }
+  else if (k === 'bookshelf') { bx(g, 1.2, 2.0, 0.4, '#7a5236', 0, 1, 0); const cols = ['#ff8f6b', '#9b7bff', '#7fe0b8', '#ffd45e', '#ff8fb1', '#5bcefa', '#f5a9b8']; for (let r = 0; r < 4; r++) { bx(g, 1.1, 0.03, 0.36, '#5e3e28', 0, 0.3 + r * 0.45, 0.02); for (let i = 0; i < 7; i++) bx(g, 0.1, 0.28 + (i % 3) * 0.04, 0.26, cols[(i + r * 2) % cols.length], -0.42 + i * 0.14, 0.47 + r * 0.45, 0.05); } }
+  else if (k === 'console') { bx(g, 1.3, 0.5, 0.5, '#2b2f3a', 0, 0.25, 0); bx(g, 1.0, 0.6, 0.05, '#111', 0, 0.85, 0.1); consoleScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.92, 0.52), new THREE.MeshBasicMaterial({ color: 0x0b0b12 })); consoleScreen.position.set(0, 0.85, 0.07); consoleScreen.rotation.y = Math.PI; g.add(consoleScreen); bx(g, 0.3, 0.06, 0.2, '#e9eef2', 0.35, 0.53, -0.1); }
+  else if (k === 'easel') {
+    bx(g, 0.05, 1.7, 0.05, '#a9784d', -0.35, 0.85, 0.1); bx(g, 0.05, 1.7, 0.05, '#a9784d', 0.35, 0.85, 0.1); bx(g, 0.05, 1.6, 0.05, '#a9784d', 0, 0.8, -0.25);
+    const tex = canvasTex(128, 128, (c, w2, h2) => { c.fillStyle = '#fbf6ee'; c.fillRect(0, 0, w2, h2); ['#ff8fb1', '#9b7bff', '#ffd45e', '#5bcefa', '#7fe0b8', '#ff8f6b'].forEach((col, i) => { c.fillStyle = col; c.globalAlpha = 0.85; c.beginPath(); c.arc(20 + R(88), 20 + R(88), 14 + R(22), 0, 7); c.fill(); }); c.globalAlpha = 1; });
+    bx(g, 0.9, 1.1, 0.04, new THREE.MeshLambertMaterial({ map: tex }), 0, 1.35, 0.14);
+  }
+  else if (k === 'stereo') { bx(g, 0.5, 1.1, 0.45, '#2a2440', 0, 0.55, 0); cy(g, 0.15, 0.15, 0.02, '#c9b6ff', 0, 0.75, 0.235).rotation.x = Math.PI / 2; cy(g, 0.09, 0.09, 0.02, '#c9b6ff', 0, 0.35, 0.235).rotation.x = Math.PI / 2; }
+  else if (k === 'plant') { cy(g, 0.22, 0.17, 0.4, '#c0583b', 0, 0.2, 0); sp(g, 0.35, '#4f9a5a', 0, 0.75, 0); sp(g, 0.25, '#68b46e', 0.15, 1.0, 0.05); }
+  else if (k === 'tree') { cy(g, 0.15, 0.22, 2.2, '#6b4a33', 0, 1.1, 0); sp(g, 1.1, '#4f9a5a', 0, 2.8, 0); sp(g, 0.8, '#68b46e', 0.6, 2.4, 0.3); sp(g, 0.7, '#5aa463', -0.5, 2.5, -0.3); }
+  else if (k === 'planter') { bx(g, w * 0.92, 0.35, 0.9, '#8b5a3c', 0, 0.17, 0); bx(g, w * 0.88, 0.04, 0.82, '#4a3324', 0, 0.35, 0); for (let i = 0; i < 6; i++) { const x = -w * 0.38 + i * w * 0.15; cy(g, 0.0, 0.12, 0.35, i % 2 ? '#5aa463' : '#7fc272', x, 0.55, -0.15 + (i % 2) * 0.3); if (i % 3 === 0) sp(g, 0.07, '#e04b3a', x + 0.05, 0.5, 0.05); } }
+  else if (k === 'bench') { bx(g, w * 0.9, 0.08, 0.5, '#c08a5a', 0, 0.45, 0); bx(g, w * 0.9, 0.4, 0.06, '#c08a5a', 0, 0.75, -0.25); [-1, 1].forEach(s => { bx(g, 0.08, 0.45, 0.45, '#3b3f4a', s * w * 0.4, 0.22, 0); }); }
+  else if (k === 'braai') { const drum = cy(g, 0.42, 0.42, 0.75, '#222', 0, 0.9, 0); drum.rotation.z = Math.PI / 2; [[-.25, -.2], [.25, -.2], [-.25, .2], [.25, .2]].forEach(([x, z]) => bx(g, 0.04, 0.7, 0.04, '#333', x, 0.35, z)); bx(g, 0.7, 0.03, 0.6, '#555', 0, 1.15, 0); sp(g, 0.06, '#ff8f6b', -0.1, 1.2, 0); sp(g, 0.06, '#c0583b', 0.12, 1.2, 0.05); }
+  else if (k === 'flag') { cy(g, 0.04, 0.05, 4.2, '#dedede', 0, 2.1, 0); sp(g, 0.07, '#e8c35a', 0, 4.25, 0); flagMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.05, 12, 1), new THREE.MeshLambertMaterial({ side: THREE.DoubleSide })); flagMesh.position.set(0.86, 3.6, 0); g.add(flagMesh); }
+  else if (k === 'toilet') { bx(g, 0.42, 0.42, 0.55, '#f5f7fa', 0, 0.21, -0.05); bx(g, 0.48, 0.05, 0.6, '#ffffff', 0, 0.44, -0.05); bx(g, 0.5, 0.5, 0.18, '#f5f7fa', 0, 0.65, 0.3); }
+  else if (k === 'shower') { bx(g, 1.3, 0.08, 1.3, '#dfe8ee', 0, 0.04, 0); bx(g, 1.3, 2.1, 0.03, new THREE.MeshLambertMaterial({ color: 0xbfe6f5, transparent: true, opacity: 0.22 }), 0, 1.1, -0.64); cy(g, 0.12, 0.12, 0.04, '#b9c2cc', 0, 2.1, 0.35); bx(g, 0.04, 0.04, 0.4, '#b9c2cc', 0, 2.15, 0.55); }
+  else if (k === 'mirror') { bx(g, 0.8, 1.4, 0.05, '#c9a86a', 0, 1.45, -T / 2 + 0.03); bx(g, 0.68, 1.28, 0.02, '#cfe6f2', 0, 1.45, -T / 2 + 0.07); }
+  else if (k === 'dbed' || k === 'bed' || k === 'futon') {
+    const low = k === 'futon';
+    bx(g, w * 0.92, low ? 0.18 : 0.32, d * 0.96, low ? '#5e4a7a' : '#6b4b3a', 0, low ? 0.09 : 0.16, 0);
+    bx(g, w * 0.88, 0.16, d * 0.92, '#f3f0ea', 0, low ? 0.26 : 0.4, 0);
+    bx(g, w * 0.9, 0.06, d * 0.6, o.color, 0, low ? 0.36 : 0.5, d * 0.17);
+    if (!low) bx(g, w * 0.92, 0.9, 0.08, '#5a3e2f', 0, 0.45, -d * 0.48);
+    const pillows = k === 'dbed' ? [-w * 0.22, w * 0.22] : [0];
+    pillows.forEach(x => bx(g, Math.min(0.6, w * 0.4), 0.12, 0.32, '#ffffff', x, low ? 0.38 : 0.52, -d * 0.36));
+  }
+  else if (k === 'desk') { bx(g, 1.1, 0.05, 0.6, '#b07a4f', 0, 0.75, 0.15); [[-.5, -.1], [.5, -.1], [-.5, .4], [.5, .4]].forEach(([x, z]) => bx(g, 0.05, 0.74, 0.05, '#8a5d3a', x, 0.37, z)); cy(g, 0.03, 0.08, 0.35, '#2a2440', 0.4, 0.95, 0.0); sp(g, 0.1, '#ffd47a', 0.4, 1.15, 0.05); bx(g, 0.3, 0.03, 0.22, '#ff8fb1', -0.1, 0.79, 0.2); }
+  else if (k === 'wardrobe') { bx(g, 1.2, 2.1, 0.6, '#8a6fb5', 0, 1.05, 0); bx(g, 0.02, 1.9, 0.01, '#5e4a7a', 0, 1.05, 0.305); }
+  scene.add(g);
+  o.group = g; o.users = (o.slots || []).map(() => null);
+  if (!o.noBlock) for (const [x, y] of o.tiles) blocked.add(key(x, y));
+  if (o.slots) { g.traverse(m => { m.userData.obj = o; }); interactables.push(g); }
+}
+OBJECTS.forEach(buildObject);
+const OBJ = id => OBJECTS.find(o => o.id === id);
+
+function setFlag(id) {
+  if (!flagMesh) return;
+  const tex = canvasTex(256, 160, (c, w, h) => drawFlag(c, w, h, id));
+  flagMesh.material.map = tex; flagMesh.material.needsUpdate = true;
+}
+
+/* ================= PATHFINDING ================= */
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+function bfs(sx, sy) {
+  const dist = new Int16Array(GW * GH).fill(-1);
+  const q = [[sx, sy]]; dist[sy * GW + sx] = 0;
+  while (q.length) { const [x, y] = q.shift(); for (const [dx, dy] of DIRS) { const nx = x + dx, ny = y + dy; if (!walkable(nx, ny) || dist[ny * GW + nx] >= 0) continue; dist[ny * GW + nx] = dist[y * GW + x] + 1; q.push([nx, ny]); } }
+  return dist;
+}
+function findPath(sx, sy, tx, ty) {
+  if (sx === tx && sy === ty) return [];
+  const prev = new Int32Array(GW * GH).fill(-1); const seen = new Uint8Array(GW * GH);
+  const q = [[sx, sy]]; seen[sy * GW + sx] = 1;
+  while (q.length) {
+    const [x, y] = q.shift();
+    if (x === tx && y === ty) break;
+    for (const [dx, dy] of DIRS) { const nx = x + dx, ny = y + dy, i = ny * GW + nx; if (seen[i] || !(walkable(nx, ny) || (nx === tx && ny === ty))) continue; seen[i] = 1; prev[i] = y * GW + x; q.push([nx, ny]); }
+  }
+  if (!seen[ty * GW + tx]) return null;
+  const out = []; let i = ty * GW + tx;
+  while (i !== sy * GW + sx) { out.unshift([i % GW, Math.floor(i / GW)]); i = prev[i]; }
+  return out;
+}
+function adjacentFree(tx, ty, fromX, fromY) {
+  const dist = bfs(fromX, fromY); let best = null, bd = 1e9;
+  for (const [dx, dy] of DIRS) { const x = tx + dx, y = ty + dy; if (!walkable(x, y)) continue; const d = dist[y * GW + x]; if (d >= 0 && d < bd) { bd = d; best = [x, y]; } }
+  return best;
+}
+function nearestWalkable(x, y) {
+  if (walkable(x, y)) return [x, y];
+  for (let r = 1; r < 6; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (walkable(x + dx, y + dy)) return [x + dx, y + dy];
+  return [10, 7];
+}
+
+/* ================= CLOCK ================= */
+let gameMin = 8 * 60;
+const SPEEDS = [0, 1, 3, 8];
+let speedIdx = 1;
+const hourOf = () => (gameMin / 60) % 24;
+const dayOf = () => Math.floor(gameMin / 1440) + 1;
+const clockStr = (m = gameMin) => { const h = Math.floor((m / 60) % 24), mm = Math.floor(m % 60); return String(h).padStart(2, '0') + ':' + String(mm).padStart(2, '0'); };
+const partOfDay = h => h < 5 ? 'Late night' : h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : h < 21 ? 'Evening' : 'Night';
+
+/* ================= PLAYER ================= */
+const P = {
+  name: 'Sam', pron: 'they/them', gender: 'nonbinary', about: '', flag: 'progress',
+  x: tc(10), z: tc(7), yaw: Math.PI, pitch: 0,
+  needs: { hunger: 70, energy: 75, bladder: 70, hygiene: 75, fun: 60, social: 50 },
+  action: null, warned: {}
+};
+function playerTile() { return [toTile(P.x), toTile(P.z)]; }
+function playerBusy() { return !!P.action; }
+
+/* ================= SIM MESHES ================= */
+function buildSimMesh(def) {
+  const g = new THREE.Group(); const body = new THREE.Group(); g.add(body);
+  const mkLeg = sx => { const p = new THREE.Group(); p.position.set(sx, 0.86, 0); bx(p, 0.17, 0.84, 0.19, def.pants, 0, -0.42, 0); bx(p, 0.18, 0.08, 0.26, '#2a2230', 0, -0.82, 0.04); body.add(p); return p; };
+  const legL = mkLeg(-0.11), legR = mkLeg(0.11);
+  cy(body, 0.2, 0.23, 0.62, def.shirt, 0, 1.18, 0);
+  const mkArm = sx => { const p = new THREE.Group(); p.position.set(sx, 1.44, 0); bx(p, 0.12, 0.26, 0.13, def.shirt, 0, -0.13, 0); bx(p, 0.1, 0.32, 0.11, def.skin, 0, -0.42, 0); body.add(p); return p; };
+  const armL = mkArm(-0.29), armR = mkArm(0.29);
+  cy(body, 0.07, 0.08, 0.1, def.skin, 0, 1.53, 0);
+  sp(body, 0.19, def.skin, 0, 1.7, 0);
+  sp(body, 0.026, '#1a1420', -0.066, 1.72, 0.17); sp(body, 0.026, '#1a1420', 0.066, 1.72, 0.17);
+  const hm = mat(def.hair);
+  if (def.hairStyle === 'bun') { const cap = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), hm); cap.position.set(0, 1.72, -0.01); body.add(cap); sp(body, 0.11, hm, 0, 1.9, -0.12); }
+  else if (def.hairStyle === 'long') { const cap = new THREE.Mesh(new THREE.SphereGeometry(0.205, 16, 12, 0, Math.PI * 2, 0, Math.PI / 1.9), hm); cap.position.set(0, 1.71, -0.01); body.add(cap); bx(body, 0.4, 0.5, 0.12, hm, 0, 1.5, -0.13); }
+  else if (def.hairStyle === 'curls') { for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; sp(body, 0.08, hm, Math.cos(a) * 0.15, 1.84 + Math.sin(i * 1.7) * 0.03, Math.sin(a) * 0.15 - 0.03); } sp(body, 0.13, hm, 0, 1.88, -0.03); }
+  else { const cap = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2.4), hm); cap.position.set(0, 1.73, -0.01); body.add(cap); }
+  scene.add(g);
+  return { g, body, legL, legR, armL, armR };
+}
+
+/* ================= LINES ================= */
+const LINES = {
+  open: ['Hey {b}, got a sec?', '{b}! Just who I wanted to see.', 'Come sit with me, {b}.', 'Howzit, {b}?'],
+  generic: ['How was your day, really?', 'The geyser is making that noise again.', 'Load shedding schedule says we\'re safe tonight.', 'Who finished the rusks?', 'Pride march is soon. Are we making a banner?', 'House braai this weekend?', 'Tell me everything.', 'I\'m so proud of you, you know that?', 'My mom called. It went... better than last time.', 'Queer book club is on Thursday.', 'We should do a family dinner.', 'Did you see that sunset over the bay?'],
+  replies: ['Ha! Same.', 'No way.', 'Honestly? Yes.', 'Mm, tell me more.', 'You\'re ridiculous. I love it.', 'That\'s so you.', 'I needed to hear that.', 'Ag, shame.', 'Lekker.', 'Count me in.'],
+  paint: ['I\'m doing a portrait series of queer elders.', 'The purple isn\'t purple enough yet.', 'Can I paint you sometime?'],
+  cook: ['I\'m trying a new bobotie recipe.', 'Taste this. Honest opinion.', 'Bistro name idea: Mia\'s Table. Too obvious?'],
+  games: ['One more round. Just one.', 'I hit the final boss and the power went.', 'Our studio is adding a they/them option to the game. Finally.'],
+  read: ['This book has the softest sapphic ending.', 'Read anything good lately?', 'I lent my favourite novel out and never got it back.'],
+  partners: ['Love you, skat.', 'Date night Friday?', 'You looked tired after your shift. Sit, I\'ll make tea.', 'Three years. Can you believe it?']
+};
+const FALLBACK = {
+  thandi: ['Long shift today, but I\'m better for seeing you.', 'Have you eaten? Don\'t make me nurse you.', 'Mia says you\'re settling in nicely. I agree.', 'Tea? I\'ll put the kettle on.', 'This house runs on group chats and rooibos. You\'ll get used to it.'],
+  mia: ['Okay but are you hungry? Because I\'m making bobotie.', 'Welcome to the chaos, my friend!', 'Braai Saturday. You\'re on salads. Kidding. Mostly.', 'You\'ve got good energy, I can tell.', 'Thandi pretends she doesn\'t like my karaoke. She does.'],
+  ren: ['What colour would you say you are today?', 'I\'m painting the whole house, one housemate at a time. You\'re next.', 'Night is when the good ideas show up.', 'Tell me something true.', 'Chosen family is the best family. Fight me.'],
+  kai: ['Hey. Uh, hi. Cool.', 'If you\'re any good at racing games we need to talk.', 'I\'m not antisocial, I\'m just buffering.', 'You can borrow my controller. Treat it with respect.', 'Ren says I need to "open up". This is me opening up.']
+};
+const fill = (s, a, b) => s.replace(/\{a\}/g, a).replace(/\{b\}/g, b).replace(/\{p\}/g, P.name);
+
+/* ================= SIMS ================= */
+const sims = [];
+const labelsEl = $('#labels');
+class Sim {
+  constructor(def, i) {
+    Object.assign(this, def);
+    this.needs = { hunger: 55 + R(35), energy: 65 + R(30), bladder: 50 + R(45), hygiene: 60 + R(35), fun: 40 + R(45), social: 40 + R(45) };
+    this.state = 'idle'; this.think = 0.6 + i * 0.5; this.path = []; this.task = null;
+    this.relP = def.relP; this.romP = 0; this.rel = {}; this.memories = []; this.chat = [];
+    this.socialCool = 10 + R(30); this.playerCool = 20 + R(40);
+    this.x = tc(def.start[0]); this.z = tc(def.start[1]); this.rot = R(6); this.phase = 0; this.pose = 'stand';
+    this.mesh = buildSimMesh(def); this.mesh.g.traverse(m => { m.userData.sim = this; });
+    this.el = document.createElement('div'); this.el.className = 'tag';
+    this.el.innerHTML = '<div class="bubble" hidden></div><div class="name"><span class="dot"></span><span class="nm"></span><small></small></div><div class="act"></div>';
+    this.el.querySelector('.nm').textContent = this.name; this.el.querySelector('small').textContent = this.pron;
+    labelsEl.appendChild(this.el);
+    this.bubbleEl = this.el.querySelector('.bubble'); this.bubbleT = 0; this.visible = true;
+  }
+  get tile() { return [toTile(this.x), toTile(this.z)]; }
+  mood() { return moodOf(this.needs); }
+  remember(s) { this.memories.push(`Day ${dayOf()} ${clockStr()}: ${s}`); if (this.memories.length > 10) this.memories.shift(); }
+  say(text, secs) { this.bubbleEl.textContent = text; this.bubbleEl.hidden = false; this.bubbleT = secs || 3.2; }
+  activity() {
+    const t = this.task;
+    switch (this.state) {
+      case 'walking': return t && t.type === 'obj' ? 'Heading off: ' + t.o.ing.toLowerCase() : t && t.type === 'social' ? 'Going to find ' + t.target.name : t && t.type === 'player' ? 'Coming to find you' : 'Wandering';
+      case 'acting': return t.o.ing;
+      case 'chatting': return 'Chatting with ' + (this.convo.a === this ? this.convo.b.name : this.convo.a.name);
+      case 'waiting': return 'Waiting for ' + (this.waitFor ? this.waitFor.name : 'someone');
+      case 'greeting': return 'Wants to talk to you';
+      case 'withPlayer': return 'Talking with you';
+      default: return 'Taking a breather';
+    }
+  }
+  canBeSummoned() {
+    if (['chatting', 'waiting', 'greeting', 'withPlayer'].includes(this.state)) return false;
+    if (this.state === 'acting' && (this.task.o.private)) return false;
+    if (this.state === 'walking' && this.task && this.task.type !== 'obj' && this.task.type !== 'wander') return false;
+    return true;
+  }
+  release() {
+    if (this.task && this.task.type === 'obj') {
+      const o = this.task.o, s = o.slots[this.task.i];
+      if (o.users[this.task.i] === this) o.users[this.task.i] = null;
+      if (this.state === 'acting') { this.x = tc(s.t[0]); this.z = tc(s.t[1]); }
+    }
+    this.pose = 'stand';
+  }
+  interrupt() { this.release(); this.task = null; this.path = []; this.state = 'idle'; this.think = 0.5; }
+  walkTo(tx, ty) { const [sx, sy] = this.tile; const p = findPath(sx, sy, tx, ty); if (!p) return false; this.path = p; this.state = 'walking'; return true; }
+  decide() {
+    const [sx, sy] = this.tile; const dist = bfs(sx, sy); const h = hourOf(); const cands = [];
+    for (const o of OBJECTS) {
+      if (!o.slots) continue;
+      o.slots.forEach((s, i) => {
+        if (o.users[i]) return; if (s.owner && s.owner !== this.id) return;
+        const d = (s.t[0] === sx && s.t[1] === sy) ? 0 : dist[s.t[1] * GW + s.t[0]]; if (d < 0) return;
+        let v = gainValue(this.needs, o.ads);
+        for (const t of o.tags) v *= (this.likes[t] || 1);
+        if (o.tags.includes('sleep')) { const since = (h - this.bedtime + 24) % 24; v *= since < 8 ? 2.6 : (this.needs.energy < 22 ? 1 : 0.12); }
+        if (o.tags.includes('toilet') && this.needs.bladder < 18) v *= 5;
+        if (o.tags.includes('sun') && (h < 7 || h > 18)) v *= 0.2;
+        if (o.tags.includes('cook') && o.id === 'braai' && (h < 11 || h > 20)) v *= 0.3;
+        v = v / (1 + d * 0.025) * (0.85 + R(0.3));
+        cands.push({ v, type: 'obj', o, i });
+      });
+    }
+    if (this.socialCool <= 0) {
+      const sinceBed = (h - this.bedtime + 24) % 24;
+      if (sinceBed >= 8 || this.needs.energy > 40) {
+        const base = (fU(this.needs.social + 35) - fU(this.needs.social)) * this.socialRate;
+        for (const s of sims) { if (s === this || !s.canBeSummoned()) continue; const r = this.rel[s.id] || 0; cands.push({ v: base * (0.6 + Math.max(0, r) / 110) * (this.partner === s.id ? 1.3 : 1) * (0.85 + R(0.3)), type: 'social', target: s }); }
+        if (this.playerCool <= 0 && !playerBusy() && hudOn && !uiOpen()) cands.push({ v: base * (0.75 + Math.max(0, this.relP) / 120) * (0.85 + R(0.3)), type: 'player' });
+      }
+    }
+    cands.push({ v: 3 + R(3), type: 'wander' });
+    cands.sort((a, b) => b.v - a.v);
+    this.start(cands[0]);
+  }
+  start(c) {
+    if (c.type === 'obj') {
+      c.o.users[c.i] = this; this.task = { type: 'obj', o: c.o, i: c.i, el: 0 };
+      const s = c.o.slots[c.i]; const [sx, sy] = this.tile;
+      if (sx === s.t[0] && sy === s.t[1]) { this.path = []; this.arrive(); }
+      else if (!this.walkTo(s.t[0], s.t[1])) { c.o.users[c.i] = null; this.task = null; this.think = 1; }
+    } else if (c.type === 'social') {
+      const t = c.target; t.interrupt(); t.state = 'waiting'; t.waitFor = this; t.waitT = 40;
+      const [tx, ty] = t.tile; const [sx, sy] = this.tile; const adj = adjacentFree(tx, ty, sx, sy);
+      this.task = { type: 'social', target: t };
+      if (!adj || !this.walkTo(adj[0], adj[1])) { t.state = 'idle'; t.think = 0.5; this.task = null; this.think = 1; this.socialCool = 20; }
+      else if (this.path.length === 0) this.arrive();
+    } else if (c.type === 'player') {
+      const [px, py] = playerTile(); const [sx, sy] = this.tile; const adj = adjacentFree(px, py, sx, sy);
+      this.task = { type: 'player', give: 50, re: 2 };
+      if (!adj || !this.walkTo(adj[0], adj[1])) { this.task = null; this.think = 1; this.playerCool = 30; }
+      else if (this.path.length === 0) this.arrive();
+    } else {
+      const [sx, sy] = this.tile; const dist = bfs(sx, sy); const opts = [];
+      for (let i = 0; i < dist.length; i++) if (dist[i] > 1 && dist[i] < 9) opts.push(i);
+      if (!opts.length) { this.think = 2; return; }
+      const i = pick(opts); this.task = { type: 'wander' };
+      if (!this.walkTo(i % GW, Math.floor(i / GW))) { this.task = null; this.think = 1; }
+    }
+  }
+  arrive() {
+    const t = this.task;
+    if (!t) { this.state = 'idle'; this.think = 0.4; return; }
+    if (t.type === 'obj') {
+      const s = t.o.slots[t.i];
+      this.state = 'acting'; t.el = 0;
+      if (s.snap) { this.x = tc(s.snap[0]); this.z = tc(s.snap[1]); }
+      this.rot = s.face !== undefined ? s.face : Math.atan2(t.o.ax - this.x, t.o.az - this.z);
+      this.pose = s.pose || t.o.pose || 'use';
+      if (t.o.tags.includes('sleep') && dist2(this.x, this.z, P.x, P.z) < 50) log(`${this.name} turned in for the night.`);
+    } else if (t.type === 'social') {
+      const o = t.target;
+      if (o.state === 'waiting' && o.waitFor === this) startConvo(this, o);
+      else { this.task = null; this.state = 'idle'; this.think = 0.5; }
+    } else if (t.type === 'player') {
+      if (dist2(this.x, this.z, P.x, P.z) < 3.4 * 3.4 && !playerBusy() && !uiOpen()) {
+        this.state = 'greeting'; this.greetT = 45; this.face(P.x, P.z);
+        this.say(fill(pick(LINES.open), this.name, P.name), 4);
+        log(`${this.name} wants to talk to you.`);
+      } else { this.task = null; this.state = 'idle'; this.think = 1; this.playerCool = 25; }
+    } else { this.task = null; this.state = 'idle'; this.think = 1 + R(2); }
+  }
+  face(x, z) { this.rot = Math.atan2(x - this.x, z - this.z); }
+  finishAct() {
+    const o = this.task.o;
+    if (o.tags.includes('paint') && R(1) < 0.5) this.remember('Finished a painting session.');
+    if (o.tags.includes('cook')) { this.remember(o.id === 'braai' ? 'Did a braai in the garden.' : 'Cooked a meal.'); if (R(1) < 0.5) this.say(pick(['Food\'s ready, come eat!', 'Who wants some?', 'Dinner is served!'])); }
+    this.release(); this.task = null; this.state = 'idle'; this.think = 0.4 + R(1);
+  }
+  update(dtMin, dt) {
+    for (const n of NEEDS) this.needs[n] = clamp(this.needs[n] - DECAY[n] * dtMin * (n === 'social' ? this.socialRate : 1), 0, 100);
+    this.socialCool -= dtMin; this.playerCool -= dtMin;
+    if (this.bubbleT > 0) { this.bubbleT -= dt; if (this.bubbleT <= 0) this.bubbleEl.hidden = true; }
+    switch (this.state) {
+      case 'idle': this.think -= dt * Math.max(1, SPEEDS[speedIdx]); if (this.think <= 0 && SPEEDS[speedIdx] > 0) this.decide(); break;
+      case 'walking': this.walk(dt); if (this.state === 'walking' && this.task && this.task.type === 'player') this.chasePlayer(dt); break;
+      case 'acting': {
+        const t = this.task, o = t.o; t.el += dtMin;
+        for (const n in o.ads) this.needs[n] = clamp(this.needs[n] + o.ads[n] / o.dur * dtMin * (o.ads[n] > 0 ? 1.15 : 1), 0, 100);
+        const full = Object.keys(o.ads).every(n => o.ads[n] < 0 || this.needs[n] >= 99);
+        let done = t.el >= o.dur || (full && t.el > o.dur * 0.3);
+        if (o.tags.includes('sleep')) { const since = (hourOf() - this.bedtime + 24) % 24; done = (this.needs.energy >= 99 && since >= 6.5) || this.needs.energy >= 100 && t.el > 500 || this.needs.bladder < 8; }
+        if (this.needs.bladder < 6 && !o.tags.includes('toilet')) done = true;
+        if (done) this.finishAct();
+        break;
+      }
+      case 'waiting': this.waitT -= dtMin; if (this.waitFor) this.face(this.waitFor.x, this.waitFor.z); if (this.waitT <= 0) { this.state = 'idle'; this.waitFor = null; this.think = 0.5; } break;
+      case 'chatting': if (this.convo.a === this) tickConvo(this.convo, dtMin, dt); break;
+      case 'greeting':
+        this.greetT -= dtMin; this.face(P.x, P.z);
+        if (this.greetT <= 0 || dist2(this.x, this.z, P.x, P.z) > 6 * 6) { this.remember(`Tried to catch ${P.name} for a chat, but they were busy.`); this.state = 'idle'; this.task = null; this.think = 1; this.playerCool = 120; this.bubbleEl.hidden = true; }
+        break;
+      case 'withPlayer': this.face(P.x, P.z); break;
+    }
+    this.animate(dt);
+  }
+  chasePlayer(dt) {
+    const t = this.task; t.give -= dt * Math.max(1, SPEEDS[speedIdx]) * 0.5; t.re -= dt;
+    if (playerBusy() || uiOpen() || t.give <= 0) { this.task = null; this.path = []; this.state = 'idle'; this.think = 1; this.playerCool = 40; return; }
+    if (dist2(this.x, this.z, P.x, P.z) < 2.2 * 2.2) { this.path = []; this.arrive(); return; }
+    if (t.re <= 0) { t.re = 1.5; const [px, py] = playerTile(); const [sx, sy] = this.tile; const adj = adjacentFree(px, py, sx, sy); if (adj) { const p = findPath(sx, sy, adj[0], adj[1]); if (p) this.path = p; } }
+  }
+  walk(dt) {
+    const sp = SPEEDS[speedIdx] === 0 ? 0 : Math.min(2.6, 1.55 * (0.75 + SPEEDS[speedIdx] * 0.25));
+    let step = sp * dt;
+    while (step > 0 && this.path.length) {
+      const [tx, ty] = this.path[0]; const gx = tc(tx), gz = tc(ty);
+      const dx = gx - this.x, dz = gz - this.z, d = Math.hypot(dx, dz);
+      if (d < 1e-3) { this.path.shift(); continue; }
+      this.rot = lerpAngle(this.rot, Math.atan2(dx, dz), 0.3);
+      const m = Math.min(d, step); this.x += dx / d * m; this.z += dz / d * m; step -= m; this.phase += m * 4.2;
+      if (m >= d) this.path.shift();
+    }
+    if (!this.path.length && this.state === 'walking') this.arrive();
+  }
+  animate(dt) {
+    const M = this.mesh, b = M.body;
+    M.g.position.set(this.x, 0, this.z); M.g.rotation.y = this.rot;
+    b.rotation.set(0, 0, 0); b.position.set(0, 0, 0);
+    let la = 0, ra = 0, ll = 0, rl = 0;
+    if (this.state === 'walking') { const s = Math.sin(this.phase); ll = s * 0.6; rl = -s * 0.6; la = -s * 0.5; ra = s * 0.5; b.position.y = Math.abs(Math.cos(this.phase)) * 0.03; }
+    else if (this.state === 'acting') {
+      const p = this.pose, tt = performance.now() / 1000;
+      if (p === 'sit') { ll = rl = -Math.PI / 2; b.position.y = -0.42; b.position.z = -0.1; la = ra = -0.5; }
+      else if (p === 'lie') { b.rotation.x = -Math.PI / 2; b.position.set(0, 0.62, 0.85); la = ra = 0.1; }
+      else if (p === 'dance') { const s = Math.sin(tt * 6); b.position.y = Math.abs(s) * 0.08; la = -2.4 + s * 0.4; ra = -2.4 - s * 0.4; b.rotation.y = s * 0.3; }
+      else { const s = Math.sin(tt * 3); la = -0.9 + s * 0.15; ra = -0.9 - s * 0.15; }
+    } else if (this.state === 'chatting' || this.state === 'greeting' || this.state === 'withPlayer') { const tt = performance.now() / 1000; ra = -0.3 + Math.sin(tt * 2.3) * 0.25; la = 0.1; }
+    M.legL.rotation.x = ll; M.legR.rotation.x = rl; M.armL.rotation.x = la; M.armR.rotation.x = ra;
+  }
+}
+function lerpAngle(a, b, t) { let d = ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; return a + d * t; }
+function dist2(ax, az, bx2, bz) { return (ax - bx2) ** 2 + (az - bz) ** 2; }
+
+function sharedTopic(a, b) {
+  if (a.partner === b.id) return 'partners';
+  const tags = ['paint', 'cook', 'games', 'read'];
+  const both = tags.filter(t => (a.likes[t] || 1) > 1.2 || (b.likes[t] || 1) > 1.2);
+  return both.length && R(1) < 0.6 ? pick(both) : 'generic';
+}
+function startConvo(a, b) {
+  const c = { a, b, el: 0, dur: 20 + R(15), next: 0, speaker: a, topic: sharedTopic(a, b), lines: 0 };
+  a.convo = b.convo = c; a.state = b.state = 'chatting'; a.face(b.x, b.z); b.face(a.x, a.z);
+}
+function tickConvo(c, dtMin, dt) {
+  c.el += dtMin; c.next -= dt;
+  for (const s of [c.a, c.b]) { s.needs.social = clamp(s.needs.social + 1.5 * dtMin, 0, 100); s.needs.fun = clamp(s.needs.fun + 0.3 * dtMin, 0, 100); s.face((s === c.a ? c.b : c.a).x, (s === c.a ? c.b : c.a).z); }
+  if (c.next <= 0) {
+    const sp = c.speaker, other = sp === c.a ? c.b : c.a;
+    const pool = c.lines === 0 ? LINES.open : (c.lines % 2 ? LINES.replies : (LINES[c.topic] || LINES.generic).concat(LINES.generic));
+    sp.say(fill(pick(pool), sp.name, other.name), 2.8);
+    c.speaker = other; c.lines++; c.next = 2.6;
+  }
+  if (c.el >= c.dur) {
+    const k = relKey(c.a.id, c.b.id); const gain = 2 + R(4);
+    c.a.rel[c.b.id] = clamp((c.a.rel[c.b.id] || 0) + gain, -100, 100); c.b.rel[c.a.id] = c.a.rel[c.b.id];
+    const topicTxt = { partners: 'us', paint: 'painting', cook: 'food', games: 'games', read: 'books', generic: 'life' }[c.topic];
+    c.a.remember(`Chatted with ${c.b.name} about ${topicTxt}.`); c.b.remember(`Chatted with ${c.a.name} about ${topicTxt}.`);
+    for (const s of [c.a, c.b]) { s.state = 'idle'; s.task = null; s.convo = null; s.think = 0.5 + R(1); s.socialCool = 60 + R(60); s.waitFor = null; }
+  }
+}
+
+/* ================= HUD ================= */
+const logEl = $('#log'); const logItems = [];
+function log(text) {
+  logItems.push({ t: clockStr(), text }); if (logItems.length > 5) logItems.shift();
+  logEl.innerHTML = '';
+  for (const it of logItems) { const p = document.createElement('p'); const tm = document.createElement('time'); tm.textContent = it.t; p.append(tm, document.createTextNode(it.text)); logEl.append(p); }
+}
+const needBarsEl = $('#needBars'); const barRefs = {};
+for (const n of NEEDS) {
+  const d = document.createElement('div'); d.className = 'need';
+  d.innerHTML = `<div class="row"><span>${NEED_LABEL[n]}</span><span class="v"></span></div><div class="bar"><i></i></div>`;
+  needBarsEl.append(d); barRefs[n] = { i: d.querySelector('i'), v: d.querySelector('.v') };
+}
+const simListEl = $('#simList'); const simRows = {};
+function buildSimList() {
+  simListEl.innerHTML = '';
+  for (const s of sims) {
+    const li = document.createElement('li');
+    li.innerHTML = '<span class="sw"></span><span class="nm"></span><span class="rl"></span><span class="ac"></span>';
+    li.querySelector('.sw').style.background = s.shirt;
+    const nm = li.querySelector('.nm'); nm.textContent = s.name; const sm = document.createElement('small'); sm.textContent = s.pron; nm.append(sm);
+    simListEl.append(li); simRows[s.id] = { li, rl: li.querySelector('.rl'), ac: li.querySelector('.ac'), sw: li.querySelector('.sw') };
+  }
+}
+function updateHud() {
+  $('#clock').textContent = clockStr();
+  $('#day').textContent = `Day ${dayOf()} · ${partOfDay(hourOf())}`;
+  for (const n of NEEDS) { const v = P.needs[n]; barRefs[n].i.style.width = v + '%'; barRefs[n].i.style.background = needColor(v); barRefs[n].v.textContent = Math.round(v); }
+  const m = moodOf(P.needs); const mi = $('#meMood'); mi.textContent = moodLabel(m); mi.style.background = moodColor(m);
+  for (const s of sims) {
+    const r = simRows[s.id]; r.ac.textContent = s.activity();
+    const rom = romLabel(s.romP); r.rl.textContent = rom || relLabel(s.relP);
+    r.sw.style.boxShadow = `0 0 0 2px ${moodColor(s.mood())}`;
+    s.el.querySelector('.act').textContent = s.activity();
+    s.el.querySelector('.dot').style.background = moodColor(s.mood());
+  }
+  for (const n of NEEDS) {
+    if (P.needs[n] < 15 && !P.warned[n]) { P.warned[n] = true; log(`You're feeling ${LOW_WORD[n]}.`); }
+    if (P.needs[n] > 40) P.warned[n] = false;
+  }
+}
+document.querySelectorAll('.speed button').forEach(b => b.addEventListener('click', () => setSpeed(+b.dataset.speed)));
+function setSpeed(i) { speedIdx = i; document.querySelectorAll('.speed button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.speed === i))); }
+
+/* ================= INPUT ================= */
+const keys = {};
+let hudOn = false, locked = false;
+const isTouch = matchMedia('(pointer: coarse)').matches;
+const menuEl = $('#interactMenu'), chatEl = $('#chat');
+const uiOpen = () => !menuEl.hidden || !chatEl.hidden || !hudOn;
+addEventListener('keydown', e => {
+  const tag = (e.target && e.target.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { if (e.key === 'Escape' && !chatEl.hidden) closeChat(); return; }
+  if (!hudOn) return;
+  keys[e.code] = true;
+  if (!menuEl.hidden) {
+    if (e.key === 'Escape') { closeMenu(true); return; }
+    const n = parseInt(e.key, 10); if (n) { const btn = menuEl.querySelectorAll('button')[n - 1]; if (btn && !btn.disabled) btn.click(); }
+    return;
+  }
+  if (e.code === 'KeyE') useTarget();
+  if (e.code === 'KeyT') talkTarget();
+  if (e.code === 'Space' && P.action) stopPlayerAction();
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+canvas.addEventListener('click', () => {
+  if (!hudOn || uiOpen() || isTouch) return;
+  try { const r = canvas.requestPointerLock && canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {}
+});
+document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === canvas; $('#hint').hidden = locked; });
+let drag = null;
+canvas.addEventListener('pointerdown', e => { if (!hudOn || uiOpen()) return; if (!locked) drag = { x: e.clientX, y: e.clientY, id: e.pointerId }; });
+addEventListener('pointerup', e => { if (drag && drag.id === e.pointerId) drag = null; });
+addEventListener('mousemove', e => {
+  if (locked) { P.yaw -= e.movementX * 0.0023; P.pitch = clamp(P.pitch - e.movementY * 0.0023, -1.35, 1.35); }
+});
+canvas.addEventListener('pointermove', e => {
+  if (drag && drag.id === e.pointerId && !locked) { P.yaw -= (e.clientX - drag.x) * 0.005; P.pitch = clamp(P.pitch - (e.clientY - drag.y) * 0.005, -1.35, 1.35); drag.x = e.clientX; drag.y = e.clientY; }
+});
+// touch joystick
+const stick = $('#stick'), knob = stick.querySelector('i'); let stickV = { x: 0, y: 0 }, stickId = null, stickO = null;
+stick.addEventListener('pointerdown', e => { stickId = e.pointerId; const r = stick.getBoundingClientRect(); stickO = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; stick.setPointerCapture(e.pointerId); e.stopPropagation(); });
+stick.addEventListener('pointermove', e => { if (e.pointerId !== stickId) return; let dx = e.clientX - stickO.x, dy = e.clientY - stickO.y; const d = Math.hypot(dx, dy), m = 45; if (d > m) { dx = dx / d * m; dy = dy / d * m; } stickV = { x: dx / m, y: dy / m }; knob.style.transform = `translate(${dx}px,${dy}px)`; });
+const stickEnd = e => { if (e.pointerId !== stickId) return; stickId = null; stickV = { x: 0, y: 0 }; knob.style.transform = ''; };
+stick.addEventListener('pointerup', stickEnd); stick.addEventListener('pointercancel', stickEnd);
+$('#tUse').addEventListener('click', () => useTarget());
+$('#tTalk').addEventListener('click', () => talkTarget());
+
+/* ================= TARGETING ================= */
+const ray = new THREE.Raycaster(); ray.far = 3.2;
+let target = null;
+function updateTarget() {
+  target = null;
+  if (P.action) return;
+  ray.setFromCamera({ x: 0, y: 0 }, camera);
+  const simGroups = sims.map(s => s.mesh.g);
+  const hits = ray.intersectObjects(interactables.concat(simGroups, wallMeshes), true);
+  for (const h of hits) {
+    if (h.object.userData.sim) { target = { sim: h.object.userData.sim }; break; }
+    if (h.object.userData.obj) { target = { obj: h.object.userData.obj }; break; }
+    break;
+  }
+  // a friend who is greeting you is always targetable when close
+  if (!target) { const g = sims.find(s => s.state === 'greeting' && dist2(s.x, s.z, P.x, P.z) < 2.6 * 2.6); if (g) target = { sim: g, greet: true }; }
+  const pr = $('#prompt');
+  if (!target || uiOpen()) { pr.hidden = true; return; }
+  pr.hidden = false; pr.innerHTML = '';
+  const add = (k, t) => { const s = document.createElement('span'); const kb = document.createElement('kbd'); kb.textContent = k; s.append(kb, document.createTextNode(t)); pr.append(s); };
+  if (target.sim) { add(isTouch ? 'Use' : 'E', ` Interact with ${target.sim.name}`); add(isTouch ? 'Talk' : 'T', ' Chat'); }
+  else { const o = target.obj; const i = freeSlot(o, 'player'); add(isTouch ? 'Use' : 'E', i >= 0 ? ' ' + o.verb : ` ${o.name}: in use`); }
+}
+function freeSlot(o, who) { return o.slots.findIndex((s, i) => !o.users[i] && (!s.owner || s.owner === who)); }
+
+function useTarget() {
+  if (!target || uiOpen()) return;
+  if (target.sim) openMenu(target.sim);
+  else startPlayerAction(target.obj);
+}
+function talkTarget() { if (!target || !target.sim || uiOpen()) return; const s = target.sim; if (blockedReason(s)) { openMenu(s); return; } engage(s); openChat(s); }
+
+/* ================= PLAYER ACTIONS ================= */
+function startPlayerAction(o) {
+  const i = freeSlot(o, 'player');
+  if (i < 0) { const s = o.slots.find(sl => sl.owner && sl.owner !== 'player'); log(s && !o.users.some(Boolean) ? `That's ${o.name.replace("'s bed", '')}'s bed. Yours is the futon in the shared room.` : `${o.name} is in use right now.`); return; }
+  o.users[i] = 'player'; P.action = { o, i, el: 0 };
+  $('#actionBar').hidden = false; $('#actionText').textContent = o.ing + '…';
+  if (o.tags.includes('sleep')) $('#sleepShade').hidden = false;
+}
+function stopPlayerAction() {
+  if (!P.action) return; const { o, i } = P.action; if (o.users[i] === 'player') o.users[i] = null;
+  P.action = null; $('#actionBar').hidden = true; $('#sleepShade').hidden = true;
+}
+function tickPlayerAction(dtMin) {
+  const a = P.action, o = a.o; a.el += dtMin;
+  for (const n in o.ads) P.needs[n] = clamp(P.needs[n] + o.ads[n] / o.dur * dtMin * (o.ads[n] > 0 ? 1.15 : 1), 0, 100);
+  const full = Object.keys(o.ads).every(n => o.ads[n] < 0 || P.needs[n] >= 99);
+  $('#actionFill').style.width = Math.min(100, a.el / o.dur * 100) + '%';
+  if (a.el >= o.dur || (full && a.el > o.dur * 0.3)) {
+    if (o.tags.includes('sleep')) log('You wake up feeling rested.');
+    else if (o.tags.includes('cook')) log(o.id === 'braai' ? 'You braaied some boerewors. The whole garden smells amazing.' : 'You cooked a proper meal.');
+    stopPlayerAction();
+  }
+}
+
+/* ================= SIM INTERACTION ================= */
+function blockedReason(s) {
+  if (s.state === 'acting' && s.task.o.tags.includes('sleep')) return `${s.name} is asleep. Let ${objPron(s)} rest.`;
+  if (s.state === 'acting' && s.task.o.private) return `${s.name} is in the bathroom. Give ${objPron(s)} some privacy.`;
+  if (s.state === 'chatting') return `${s.name} is mid-conversation with ${s.convo.a === s ? s.convo.b.name : s.convo.a.name}.`;
+  return '';
+}
+function objPron(s) { return { 'she/her': 'her', 'he/him': 'him' }[s.pron] || 'them'; }
+function engage(s) {
+  if (s.state === 'chatting' || s.state === 'withPlayer') return;
+  if (s.state === 'greeting') { s.relP += 2; s.remember(`${P.name} made time to chat when I asked.`); }
+  for (const o of sims) if (o.waitFor === s) { o.state = 'idle'; o.waitFor = null; o.think = 0.5; }
+  s.interrupt(); s.state = 'withPlayer'; s.bubbleEl.hidden = true;
+}
+function disengage(s) { if (s && s.state === 'withPlayer') { s.state = 'idle'; s.think = 1.2; s.playerCool = 90 + R(60); } }
+
+function canFlirt(s) { return !s.partner && s.romanceOpen.includes(P.gender); }
+function openMenu(s) {
+  releaseLock();
+  const why = blockedReason(s);
+  menuEl.innerHTML = '';
+  const h = document.createElement('h4'); h.textContent = s.name; const sm = document.createElement('small'); sm.textContent = `${s.pron} · ${romLabel(s.romP) || relLabel(s.relP)} · ${moodLabel(s.mood())}`; h.append(sm); menuEl.append(h);
+  const sub = document.createElement('p'); sub.textContent = why || s.short; menuEl.append(sub);
+  if (!why) engage(s);
+  const opts = [
+    { t: 'Chat', d: 'free talk', f: () => { closeMenu(false); openChat(s); } },
+    { t: 'Compliment', d: '', f: () => quick(s, 'compliment') },
+    { t: 'Tell a joke', d: '', f: () => quick(s, 'joke') },
+    { t: 'Hug', d: s.relP < 30 ? 'needs Friend' : '', f: () => quick(s, 'hug') }
+  ];
+  if (!s.partner) opts.push({ t: 'Flirt', d: s.relP < 40 ? 'needs to know you better' : '', f: () => quick(s, 'flirt') });
+  opts.forEach((o, i) => {
+    const b = document.createElement('button'); b.type = 'button';
+    const kb = document.createElement('kbd'); kb.textContent = i + 1; b.append(kb, document.createTextNode(o.t));
+    if (o.d) { const sp2 = document.createElement('span'); sp2.textContent = o.d; b.append(sp2); }
+    b.disabled = !!why; b.addEventListener('click', o.f); menuEl.append(b);
+  });
+  const c = document.createElement('button'); c.type = 'button'; c.textContent = why ? 'OK' : 'Never mind'; c.addEventListener('click', () => closeMenu(true)); menuEl.append(c);
+  menuEl.hidden = false; menuEl._sim = why ? null : s;
+}
+function closeMenu(release) { menuEl.hidden = true; if (release) disengage(menuEl._sim); menuEl._sim = null; }
+function quick(s, kind) {
+  let line, d = 0;
+  const r = s.relP;
+  if (kind === 'compliment') { d = r < 0 ? 1 : 4; line = pick([`Aw, thanks ${P.name}!`, 'Stop it, I\'m blushing.', 'You\'re sweet. Really.', 'Okay, that made my day.']); s.remember(`${P.name} paid me a compliment.`); }
+  else if (kind === 'joke') { const ok = R(1) < (s.traits.includes('funny') ? 0.85 : 0.6) && s.needs.energy > 15; d = ok ? 5 : -1; line = ok ? pick(['Hahaha! Okay, that\'s good.', 'I\'m stealing that.', 'Terrible. Tell me another.']) : pick(['...I don\'t get it.', 'Not my kind of humour, sorry.', 'Too tired to laugh, sorry.']); s.remember(`${P.name} told me a joke${ok ? ' that actually landed' : ' that fell flat'}.`); s.needs.fun = clamp(s.needs.fun + (ok ? 12 : 0), 0, 100); }
+  else if (kind === 'hug') { if (r >= 30) { d = 4; line = pick(['Come here, you.', 'I needed that.', 'Best hugs in the house.']); s.remember(`${P.name} gave me a hug.`); } else { d = -2; line = pick(['Oh! Um. Maybe when we know each other better?', 'I\'m more of a wave person, for now.']); s.remember(`${P.name} went in for a hug too soon.`); } }
+  else if (kind === 'flirt') {
+    if (s.partner) { line = `I'm with ${SIM_DEFS.find(d2 => d2.id === s.partner).name}, love. But I'm flattered.`; d = 0; }
+    else if (!canFlirt(s)) { line = pick(['Ha, you\'re sweet, but I don\'t see us that way. Friends?', 'That\'s kind of you. I\'m not into it, but I\'m glad you\'re here.']); d = 1; s.remember(`${P.name} flirted with me; I let them down gently.`); }
+    else if (r < 40) { line = pick(['Slow down, we only just met!', 'Buy me a coffee first.']); d = -1; s.romP = clamp(s.romP + 2, 0, 100); }
+    else { const ok = R(1) < 0.55 + (r - 40) / 100; if (ok) { s.romP = clamp(s.romP + 12, 0, 100); d = 3; line = pick(['Oh. Oh, okay. Smooth.', 'Are you flirting with me? ...Keep going.', 'You\'re trouble, aren\'t you?']); s.remember(`${P.name} flirted with me and I liked it.`); if (s.romP >= 25 && s.romP - 12 < 25) log(`${s.name} has a crush on you.`); if (s.romP >= 60 && s.romP - 12 < 60) log(`You and ${s.name} are dating now.`); } else { d = 0; line = 'Ha. Not tonight, but nice try.'; } }
+  }
+  s.relP = clamp(s.relP + d, -100, 100); s.needs.social = clamp(s.needs.social + 8, 0, 100); P.needs.social = clamp(P.needs.social + 10, 0, 100);
+  closeMenu(true); s.say(line, 3.5);
+  if (d > 2) log(`${s.name} liked that.`); else if (d < 0) log(`That didn't land with ${s.name}.`);
+}
+
+/* ================= CHAT (LIVE AI) ================= */
+let sample = null, aiOff = false, chatSim = null, chatBusy = false, chatCtl = null;
+if (window.claude && typeof window.claude.use === 'function') {
+  window.claude.use('sample').then(fn => { sample = fn || null; setChatNote(); }).catch(() => {});
+}
+const chatLog = $('#chatLog'), chatInput = $('#chatInput');
+function setChatNote() { $('#chatNote').textContent = (!sample || aiOff) ? 'Using built-in lines. Live AI replies are off here.' : 'Live AI replies. They know the house, their mood and what happened today.'; }
+function bubble(cls, text) { const d = document.createElement('div'); d.className = 'msg ' + cls; d.textContent = text; chatLog.append(d); chatLog.scrollTop = chatLog.scrollHeight; return d; }
+function openChat(s) {
+  releaseLock(); chatSim = s; engage(s);
+  $('#chatSw').style.background = s.shirt; $('#chatName').textContent = s.full;
+  $('#chatMeta').textContent = `${s.pron} · ${romLabel(s.romP) || relLabel(s.relP)} · ${s.short}`;
+  chatLog.innerHTML = '';
+  if (!s.chat.length) bubble('sys', `Your first proper conversation with ${s.name}.`);
+  for (const m of s.chat.slice(-12)) bubble(m.role === 'user' ? 'you' : 'them', m.content);
+  const sug = $('#suggest'); sug.innerHTML = '';
+  [`How are you doing, really?`, `What are you working on?`, `How did you find this house?`, `What's Pride like in Gqeberha?`].forEach(t => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = t; b.addEventListener('click', () => { chatInput.value = t; sendChat(); }); sug.append(b); });
+  setChatNote(); chatEl.hidden = false; setTimeout(() => chatInput.focus(), 30);
+}
+function closeChat() {
+  if (chatCtl) chatCtl.abort();
+  chatEl.hidden = true;
+  if (chatSim) { const last = chatSim.chat.filter(m => m.role === 'user').slice(-1)[0]; if (last) chatSim.remember(`Talked with ${P.name}. They said: "${last.content.slice(0, 80)}"`); disengage(chatSim); }
+  chatSim = null; chatInput.blur();
+}
+$('#chatClose').addEventListener('click', closeChat);
+$('#chatForm').addEventListener('submit', e => { e.preventDefault(); sendChat(); });
+
+function needsPhrase(s) {
+  const low = NEEDS.filter(n => s.needs[n] < 30).map(n => LOW_WORD[n]);
+  const high = NEEDS.filter(n => s.needs[n] > 85).map(n => ({ hunger: 'well fed', energy: 'well rested', bladder: 'comfortable', hygiene: 'fresh', fun: 'in a playful mood', social: 'socially full up' }[n]));
+  return (low.length ? 'Feeling ' + low.join(', ') + '. ' : '') + (high.length ? 'Also ' + high.join(', ') + '.' : '');
+}
+function rulesFor(s) {
+  const [tx, ty] = s.tile; const room = ROOMS[roomAt(tx, ty)] || 'house';
+  const others = sims.filter(o => o !== s).map(o => `${o.full} (${o.pron}), ${o.bio.split('.')[0]}; relationship: ${s.partner === o.id ? 'your partner' : relLabel(s.rel[o.id] || 0)}`).join('\n- ');
+  const rom = romLabel(s.romP);
+  return `You are role-playing ${s.full}, who goes by ${s.name} (${s.pron}), one of the housemates in "Lavender House", a cozy life-sim game for an LGBTQIA+ audience. The game is set in a queer share house in Gqeberha, South Africa. Everyone in the house is an adult, out, and part of each other's chosen family.
+
+About ${s.name}: ${s.bio} Works as ${s.job}. Traits: ${s.traits.join(', ')}.
+Other housemates:
+- ${others}
+
+Right now: Day ${dayOf()}, ${clockStr()} (${partOfDay(hourOf()).toLowerCase()}). ${s.name} is in the ${room} and had been ${s.task && s.task.type === 'obj' ? s.task.o.ing.toLowerCase() : 'taking a breather'} before ${P.name} came over. ${needsPhrase(s)} Overall mood: ${moodLabel(s.mood())}.
+
+You are talking with ${P.name}, the newest housemate (pronouns: ${P.pron}; gender: ${P.gender === 'unsaid' ? 'not shared' : P.gender}${P.about ? '; what they shared about themselves: ' + P.about : ''}). They fly the ${FLAGS[P.flag].name} flag in the garden. Your relationship: ${relLabel(s.relP)} (${Math.round(s.relP)} out of 100)${rom ? ', and romantically: ' + rom : ''}.
+${s.name}'s recent memories:
+${s.memories.slice(-6).map(m => '- ' + m).join('\n') || '- Nothing notable yet.'}
+
+How to reply:
+- Speak as ${s.name}, casually, like a real housemate: 1 to 3 short sentences. Light South African English is welcome.
+- Always use ${P.name}'s pronouns (${P.pron}) correctly, and respect everyone's identities. Queer joy, warmth and honesty are the tone of this house.
+- Let your needs and mood colour what you say (if you're starving you might mention food), but never mention numbers, stats or game mechanics, and never say you're an AI.
+- Your orientation is part of who you are. ${s.partner ? `You are in a committed relationship with your partner and kindly decline any flirting.` : `Only reciprocate flirting if the relationship is Friend or closer and it fits your orientation (${s.romanceOpen.length > 3 ? 'attracted to people of any gender' : 'attracted to men'}); otherwise turn it down kindly.`} Keep anything romantic sweet and PG-13.
+- If ${P.name} seems to be really struggling, be a caring friend and gently suggest talking to someone they trust or a support line.
+- On a final line of its own, write only [[feel:N]] where N is a whole number from -2 to 2 for how ${P.name}'s latest message made ${s.name} feel about them.`;
+}
+function stripTag(t) { return t.replace(/\s*\[\[[\s\S]*$/, '').replace(/\s*\[$/, '').trim(); }
+function fallbackReply(s, msg) {
+  const m = msg.toLowerCase();
+  if (/\b(hi|hey|hello|howzit|morning|evening)\b/.test(m)) return pick([`Hey ${P.name}!`, `Howzit, ${P.name}.`, 'Oh hey, you!']) + ' ' + pick(FALLBACK[s.id]);
+  if (/food|hungry|eat|cook|braai|dinner/.test(m)) return s.needs.hunger < 40 ? 'Don\'t talk about food, I\'m starving. Braai later?' : (s.id === 'mia' ? 'Say less. I\'m cooking tonight.' : 'Mia\'s the chef here. Ask her nicely.');
+  if (/tired|sleep|exhaust/.test(m)) return s.needs.energy < 40 ? 'Same. I could sleep for a week.' : 'Go nap! The futon is surprisingly decent.';
+  if (/pride|queer|gay|trans|lesbian|bi|nonbinary|flag/.test(m)) return pick(['This house is the safest place I know. I\'m glad you\'re in it.', 'Pride march this year: matching outfits. Non-negotiable.', 'Chosen family is the realest thing I have.']);
+  if (s.needs.social < 30) return 'Honestly I\'m glad you came over. I was getting lonely. ' + pick(FALLBACK[s.id]);
+  return pick(FALLBACK[s.id]);
+}
+async function sendChat() {
+  const s = chatSim; const text = chatInput.value.trim(); if (!s || !text || chatBusy) return;
+  chatInput.value = ''; bubble('you', text);
+  s.chat.push({ role: 'user', content: text }); if (s.chat.length > 16) s.chat.splice(0, s.chat.length - 16);
+  P.needs.social = clamp(P.needs.social + 5, 0, 100); s.needs.social = clamp(s.needs.social + 4, 0, 100);
+  const out = bubble('them', '…'); chatBusy = true; $('#chatSend').disabled = true;
+  let reply = '', feel = 0;
+  if (sample && !aiOff) {
+    chatCtl = new AbortController();
+    try {
+      const hist = s.chat.slice(-12); while (hist.length && hist[0].role !== 'user') hist.shift();
+      const res = await sample([{ role: 'user', content: rulesFor(s) }].concat(hist), { cache: false, modelTier: 'quick', signal: chatCtl.signal, onText: ({ text: t }) => { const v = stripTag(t); if (v) { out.textContent = v; chatLog.scrollTop = chatLog.scrollHeight; } } });
+      const mm = res.text.match(/\[\[feel:\s*(-?\d)\s*\]\]/i); feel = mm ? clamp(parseInt(mm[1], 10), -2, 2) : 0;
+      reply = stripTag(res.text);
+    } catch (e) {
+      const code = e && e.code;
+      if (code === 'cancelled') { chatBusy = false; $('#chatSend').disabled = false; return; }
+      if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(code)) { aiOff = true; setChatNote(); }
+      if (code === 'rate_limited') bubble('sys', 'Live replies are resting for a bit. Using built-in lines.');
+      if (code === 'refused') bubble('sys', `${s.name} would rather talk about something else.`);
+      reply = (e && e.text) ? stripTag(e.text) : fallbackReply(s, text);
+    } finally { chatCtl = null; }
+  } else {
+    await new Promise(r => setTimeout(r, 450 + R(500)));
+    reply = fallbackReply(s, text); feel = /thank|love|proud|beautiful|amazing|sorry|glad/i.test(text) ? 1 : 0;
+  }
+  if (!reply) reply = '…';
+  out.textContent = reply;
+  s.chat.push({ role: 'assistant', content: reply }); if (s.chat.length > 16) s.chat.splice(0, s.chat.length - 16);
+  s.relP = clamp(s.relP + 1 + feel * 2.5, -100, 100);
+  $('#chatMeta').textContent = `${s.pron} · ${romLabel(s.romP) || relLabel(s.relP)} · ${s.short}`;
+  if (feel >= 2) log(`${s.name} really enjoyed that.`); else if (feel <= -2) log(`${s.name} seemed hurt by that.`);
+  chatBusy = false; $('#chatSend').disabled = false; chatInput.focus(); scheduleSave();
+}
+function releaseLock() { try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {} for (const k in keys) keys[k] = false; }
+
+/* ================= SAVE ================= */
+const SAVE_KEY = 'lavender-house-v1';
+function serialize() {
+  return JSON.stringify({ v: 1, gameMin, P: { name: P.name, pron: P.pron, gender: P.gender, about: P.about, flag: P.flag, x: P.x, z: P.z, yaw: P.yaw, needs: P.needs },
+    sims: sims.map(s => ({ id: s.id, needs: s.needs, relP: s.relP, romP: s.romP, rel: s.rel, memories: s.memories, chat: s.chat, tile: s.tile })) });
+}
+function save() { if (!hudOn) return; try { localStorage.setItem(SAVE_KEY, serialize()); } catch (_) {} }
+let saveTimer = null; function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 800); }
+function loadSave() { try { const t = localStorage.getItem(SAVE_KEY); return t ? JSON.parse(t) : null; } catch (_) { return null; } }
+setInterval(save, 20000);
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+
+/* ================= START SCREEN ================= */
+const mates = $('#mates');
+SIM_DEFS.forEach(d => { const m = document.createElement('div'); m.className = 'mate'; m.innerHTML = '<b><i></i><span></span></b><small></small><span></span>'; m.querySelector('i').style.background = d.shirt; m.querySelector('b span').textContent = d.full; m.querySelector('small').textContent = d.pron; m.querySelector(':scope > span').textContent = d.short; mates.append(m); });
+const stripe = $('#brandStripe'); FLAGS.rainbow.stripes.forEach(c => { const i = document.createElement('i'); i.style.background = c; stripe.append(i); });
+const flagsEl = $('#flags'); let chosenFlag = 'progress';
+Object.keys(FLAGS).forEach(id => {
+  const b = document.createElement('button'); b.type = 'button'; b.title = FLAGS[id].name; b.setAttribute('aria-label', FLAGS[id].name + ' flag'); b.setAttribute('aria-pressed', String(id === chosenFlag));
+  const c = document.createElement('canvas'); c.width = 88; c.height = 56; drawFlag(c.getContext('2d'), 88, 56, id); b.append(c);
+  b.addEventListener('click', () => { chosenFlag = id; flagsEl.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); $('#flagName').textContent = FLAGS[id].name; setFlag(id); });
+  flagsEl.append(b);
+});
+$('#flagName').textContent = FLAGS[chosenFlag].name; setFlag(chosenFlag);
+$('#pPron').addEventListener('change', e => { $('#customWrap').hidden = e.target.value !== 'custom'; });
+const existing = loadSave();
+if (existing && existing.P) { const c = $('#continueBtn'); c.hidden = false; c.textContent = `Continue as ${existing.P.name}`; c.addEventListener('click', () => begin(existing)); $('#moveIn').textContent = 'Start over'; }
+$('#createForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const pron = $('#pPron').value === 'custom' ? ($('#pPronCustom').value.trim() || 'they/them') : $('#pPron').value;
+  P.name = $('#pName').value.trim() || 'Sam'; P.pron = pron; P.gender = $('#pGender').value; P.about = $('#pAbout').value.trim(); P.flag = chosenFlag;
+  begin(null);
+});
+
+function begin(saveData) {
+  sims.forEach(s => { scene.remove(s.mesh.g); s.el.remove(); }); sims.length = 0;
+  OBJECTS.forEach(o => { if (o.users) o.users.fill(null); });
+  SIM_DEFS.forEach((d, i) => sims.push(new Sim(d, i)));
+  for (const a of sims) for (const b of sims) if (a !== b) a.rel[b.id] = START_RELS[relKey(a.id, b.id)] || 35;
+  if (saveData) {
+    gameMin = saveData.gameMin; Object.assign(P, saveData.P); P.needs = Object.assign({}, saveData.P.needs);
+    for (const sd of saveData.sims) { const s = sims.find(x => x.id === sd.id); if (!s) continue; Object.assign(s.needs, sd.needs); s.relP = sd.relP; s.romP = sd.romP || 0; s.rel = sd.rel; s.memories = sd.memories || []; s.chat = sd.chat || []; const [tx, ty] = nearestWalkable(sd.tile[0], sd.tile[1]); s.x = tc(tx); s.z = tc(ty); }
+    const [px, py] = nearestWalkable(toTile(P.x), toTile(P.z)); P.x = tc(px); P.z = tc(py);
+    log(`Welcome back, ${P.name}.`);
+  } else {
+    gameMin = 8 * 60; P.x = tc(11); P.z = tc(6); P.yaw = Math.PI; P.pitch = 0;
+    P.needs = { hunger: 70, energy: 75, bladder: 70, hygiene: 75, fun: 60, social: 50 };
+    sims.forEach(s => s.remember(`${P.name} (${P.pron}) moved into the house today and took the futon in the shared room.`));
+    log(`Moving day! Welcome to Lavender House, ${P.name}.`);
+    setTimeout(() => log('Mia hung your flag on the garden pole.'), 1500);
+  }
+  setFlag(P.flag);
+  $('#meName').textContent = P.name; $('#mePron').textContent = P.pron;
+  buildSimList(); $('#start').hidden = true; $('#hud').hidden = false; hudOn = true;
+  $('#touch').hidden = !isTouch; if (isTouch) $('#hint').hidden = true;
+  setSpeed(1); save();
+}
+
+/* ================= LIGHTING ================= */
+const skyDay = new THREE.Color(0xbfe3ff), skyDusk = new THREE.Color(0xf6a98c), skyNight = new THREE.Color(0x1b1630), tmpC = new THREE.Color();
+function updateLight() {
+  const h = hourOf();
+  const d = clamp(Math.sin((h - 6) / 13 * Math.PI), 0, 1);
+  const dusk = clamp(1 - Math.abs(h - 18.5) / 1.6, 0, 1) + clamp(1 - Math.abs(h - 6) / 1.2, 0, 1) * 0.6;
+  tmpC.copy(skyNight).lerp(skyDay, d).lerp(skyDusk, clamp(dusk, 0, 0.7));
+  scene.background = tmpC.clone(); scene.fog.color.copy(tmpC);
+  hemi.intensity = 0.32 + 0.55 * d; sun.intensity = 0.1 + 0.55 * d;
+  sun.color.setHSL(0.09, 0.6 * clamp(dusk, 0, 1), 0.85);
+  const lampI = 0.18 + 0.75 * (1 - d); lamps.forEach(L => { L.intensity = lampI; });
+  const watching = OBJ('sofa').users.some(Boolean);
+  if (tvScreen) tvScreen.material.color.setHex(watching ? (Math.floor(performance.now() / 700) % 2 ? 0x7d9bff : 0xc9b6ff) : 0x0b0b12);
+  const gaming = OBJ('console').users.some(Boolean);
+  if (consoleScreen) consoleScreen.material.color.setHex(gaming ? (Math.floor(performance.now() / 300) % 3 ? 0x7fe0b8 : 0xffd45e) : 0x0b0b12);
+}
+
+/* ================= LOOP ================= */
+const v3 = new THREE.Vector3(); const occRay = new THREE.Raycaster(); let occTimer = 0, hudTimer = 0, targetTimer = 0;
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+let last = performance.now();
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  const paused = uiOpen();
+  let mult = SPEEDS[speedIdx];
+  if (P.action && mult > 0) mult = Math.max(mult, P.action.o.tags.includes('sleep') ? 40 : 6);
+  const dtMin = paused ? 0 : dt * mult;
+  if (hudOn) {
+    gameMin += dtMin;
+    for (const n of NEEDS) P.needs[n] = clamp(P.needs[n] - DECAY[n] * dtMin, 0, 100);
+    if (P.action && !paused) tickPlayerAction(dtMin);
+    if (!paused) for (const s of sims) s.update(dtMin, dt * (mult > 8 ? 2.5 : 1));
+    else for (const s of sims) s.animate(dt);
+    movePlayer(dt);
+    targetTimer -= dt; if (targetTimer <= 0) { targetTimer = 0.08; updateTarget(); }
+    hudTimer -= dt; if (hudTimer <= 0) { hudTimer = 0.25; updateHud(); }
+  } else {
+    // attract mode: slow orbit through the house
+    P.yaw += dt * 0.08; gameMin += dt * 4;
+  }
+  camera.position.set(P.x, hudOn ? (P.action && P.action.o.tags.includes('sleep') ? 0.6 : 1.62) : 2.0, P.z);
+  camera.rotation.set(P.pitch, P.yaw, 0);
+  if (flagMesh) { const pos = flagMesh.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { const x = pos.getX(i); pos.setZ(i, Math.sin(now / 400 + x * 3) * 0.08 * (x + 0.85)); } pos.needsUpdate = true; }
+  updateLight();
+  renderer.render(scene, camera);
+  occTimer -= dt; positionLabels(occTimer <= 0); if (occTimer <= 0) occTimer = 0.2;
+}
+function movePlayer(dt) {
+  if (uiOpen()) return;
+  let fx = 0, fz = 0;
+  if (keys.KeyW || keys.ArrowUp) fz += 1; if (keys.KeyS || keys.ArrowDown) fz -= 1;
+  if (keys.KeyA || keys.ArrowLeft) fx -= 1; if (keys.KeyD || keys.ArrowRight) fx += 1;
+  if (stickV.x || stickV.y) { fx += stickV.x; fz -= stickV.y; }
+  if (!fx && !fz) return;
+  if (P.action) { stopPlayerAction(); return; }
+  const len = Math.hypot(fx, fz); fx /= Math.max(1, len); fz /= Math.max(1, len);
+  const sp = (keys.ShiftLeft || keys.ShiftRight ? 5 : 3.1) * dt;
+  const sx = -Math.sin(P.yaw), sz = -Math.cos(P.yaw), rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
+  const mx = (sx * fz + rx * fx) * sp, mz = (sz * fz + rz * fx) * sp;
+  if (freeAt(P.x + mx, P.z)) P.x += mx;
+  if (freeAt(P.x, P.z + mz)) P.z += mz;
+}
+function freeAt(x, z) { const r = 0.26; for (const [dx, dz] of [[-r, -r], [r, -r], [-r, r], [r, r]]) if (!walkable(Math.floor((x + dx) / T), Math.floor((z + dz) / T))) return false; return true; }
+function positionLabels(checkOcc) {
+  const W = innerWidth, H = innerHeight; const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
+  for (const s of sims) {
+    const lying = s.state === 'acting' && s.pose === 'lie';
+    v3.set(s.x, lying ? 1.0 : (s.state === 'acting' && s.pose === 'sit' ? 1.65 : 2.05), s.z);
+    const dx = v3.x - camera.position.x, dy = v3.y - camera.position.y, dz = v3.z - camera.position.z; const dist = Math.hypot(dx, dy, dz);
+    let show = hudOn && (dx * fwd.x + dy * fwd.y + dz * fwd.z) > 0 && dist < 16;
+    if (show && checkOcc) { occRay.set(camera.position, new THREE.Vector3(dx / dist, dy / dist, dz / dist)); occRay.far = dist - 0.3; s.visible = occRay.intersectObjects(wallMeshes, false).length === 0; }
+    show = show && s.visible;
+    if (!show) { s.el.style.display = 'none'; continue; }
+    v3.project(camera); s.el.style.display = '';
+    const sc = clamp(1.25 - dist / 18, 0.7, 1.1);
+    s.el.style.transform = `translate(${(v3.x + 1) / 2 * W}px,${(1 - v3.y) / 2 * H}px) translate(-50%,-100%) scale(${sc})`;
+  }
+}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
