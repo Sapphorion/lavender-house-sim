@@ -82,6 +82,34 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 #actionBar .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
 #actionBar .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--lav),var(--rose))}
 #actionBar small{color:var(--muted)}
+#pause{position:absolute;inset:0;z-index:5;background:rgba(14,9,28,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:grid;place-items:center;padding:16px;overflow-y:auto}
+.pauseCard{width:min(360px,100%);background:var(--glass-hi);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.pauseCard > div{display:grid;gap:8px}
+.pauseCard h2{font-family:var(--display);font-weight:400;font-size:32px;margin:0;line-height:1}
+.pauseSub{margin:0 0 8px;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.pbtn{font:inherit;font-size:15px;font-weight:600;color:var(--paper);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;padding:11px 14px;text-align:left;cursor:pointer;width:100%;display:flex;align-items:center;gap:10px}
+.pbtn:hover{background:rgba(255,255,255,.12)}
+.pbtn small{margin-left:auto;color:var(--muted);font-weight:500;font-size:12px}
+.pbtn.primary{background:var(--peach);color:var(--ink);border-color:transparent}
+.pbtn.primary small{color:var(--ink);opacity:.7}
+.pbtn.exit{color:var(--warn)}
+.pnote{min-height:1.2em;margin:2px 0 0;font-size:12px;color:var(--mint)}
+.setRow{display:grid;gap:6px;font-size:13px;color:var(--muted);margin-top:4px}
+.setRow input[type=range]{width:100%;accent-color:var(--lav)}
+.chkRow{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--paper);margin:4px 0}
+.chkRow input{accent-color:var(--lav);width:16px;height:16px}
+.segGroup{display:flex;gap:6px;flex-wrap:wrap}
+.seg{font:inherit;font-size:13px;color:var(--paper);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer}
+.seg[aria-pressed="true"]{background:var(--lav);color:var(--ink);border-color:var(--lav)}
+.clockRow{display:flex;align-items:center;justify-content:space-between;gap:14px}
+#menuBtn{font:inherit;font-weight:600;font-size:12px;color:var(--paper);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:10px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:7px}
+#menuBtn:hover{background:rgba(255,255,255,.16)}
+.burger{display:grid;gap:3px}.burger i{display:block;width:13px;height:2px;border-radius:2px;background:currentColor}
+.look{display:grid;gap:8px}
+.lookRow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lookRow > span{width:74px;font-size:12px;color:var(--muted);letter-spacing:.04em}
+.swatch{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.swatch[aria-pressed="true"]{border-color:var(--paper);box-shadow:0 0 0 2px var(--lav)}
 #sleepShade{position:absolute;inset:0;background:rgba(10,6,24,.72);display:grid;place-items:center;font-family:var(--display);font-size:28px;color:var(--lav);pointer-events:none}
 
 .menu{position:absolute;left:50%;top:calc(50% + 30px);transform:translateX(-50%);background:var(--glass-hi);border:1px solid var(--line);border-radius:16px;padding:12px;min-width:260px;display:grid;gap:6px}
@@ -164,12 +192,12 @@ form.create select option{background:var(--ink)}
 </head>
 <body>
 <div id="app">
-  <canvas id="view" aria-label="First-person view of Lavender House"></canvas>
+  <canvas id="view" aria-label="View of Lavender House"></canvas>
   <div id="labels"></div>
 
   <div id="hud" hidden>
     <div id="clockPanel" class="panel">
-      <div id="clock">08:00</div>
+      <div class="clockRow"><div id="clock">08:00</div><button type="button" id="menuBtn" aria-label="Open menu"><span class="burger" aria-hidden="true"><i></i><i></i><i></i></span>Menu</button></div>
       <div id="day">Day 1 · Morning</div>
       <div class="speed" role="group" aria-label="Game speed">
         <button type="button" data-speed="0" aria-pressed="false">Pause</button>
@@ -188,13 +216,46 @@ form.create select option{background:var(--ink)}
     <div id="log" class="panel" aria-live="polite"></div>
     <div id="actionBar" hidden><span id="actionText"></span><div class="bar"><i id="actionFill"></i></div><small>Move to stop</small></div>
     <div id="interactMenu" class="menu" hidden></div>
-    <div id="hint">Click the view to look around (or drag) · <kbd>WASD</kbd>move · <kbd>←</kbd><kbd>→</kbd>turn · <kbd>E</kbd>use · <kbd>T</kbd>talk · <kbd>Esc</kbd>free mouse</div>
+    <div id="hint">Click the view to look around (or drag) · <kbd>WASD</kbd>move · <kbd>E</kbd>use · <kbd>T</kbd>talk · <kbd>V</kbd>camera · scroll to zoom · <kbd>Esc</kbd>menu</div>
     <div id="touch" hidden>
       <div id="stick"><i></i></div>
       <div id="touchBtns"><button type="button" id="tUse">Use</button><button type="button" id="tTalk">Talk</button></div>
     </div>
   </div>
   <div id="sleepShade" hidden>Sleeping…</div>
+
+  <div id="pause" hidden role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+    <div class="pauseCard">
+      <div id="pauseMain">
+        <h2 id="pauseTitle">Paused</h2>
+        <p class="pauseSub" id="pauseSub"></p>
+        <button type="button" class="pbtn primary" id="pResume">Resume<small>Esc</small></button>
+        <button type="button" class="pbtn" id="pSave">Save game</button>
+        <button type="button" class="pbtn" id="pSettings">Settings</button>
+        <button type="button" class="pbtn" id="pMain">Main menu<small>saves first</small></button>
+        <button type="button" class="pbtn exit" id="pExit">Exit game<small>saves first</small></button>
+        <p class="pnote" id="pNote" aria-live="polite"></p>
+      </div>
+      <div id="pauseSettings" hidden>
+        <h2>Settings</h2>
+        <div class="setRow"><span id="camLbl">Camera</span>
+          <div class="segGroup" role="group" aria-labelledby="camLbl">
+            <button type="button" class="seg" id="sThird">Behind you</button>
+            <button type="button" class="seg" id="sFirst">First person</button>
+          </div>
+        </div>
+        <label class="setRow" for="sDist">Camera distance <input type="range" id="sDist" min="1.6" max="5" step="0.1"></label>
+        <label class="setRow" for="sSens">Mouse sensitivity <input type="range" id="sSens" min="0.4" max="2.2" step="0.1"></label>
+        <label class="chkRow" for="sInvert"><input type="checkbox" id="sInvert"> Invert up and down</label>
+        <button type="button" class="pbtn" id="sBack">Back</button>
+      </div>
+      <div id="pauseBye" hidden>
+        <h2>See you soon</h2>
+        <p class="pauseSub">Your game is saved in this browser. You can close this tab now, and pick up where you left off next time.</p>
+        <button type="button" class="pbtn primary" id="byeTitle">Back to title screen</button>
+      </div>
+    </div>
+  </div>
 
   <aside id="chat" hidden aria-label="Conversation">
     <header>
@@ -216,7 +277,7 @@ form.create select option{background:var(--ink)}
       <div class="brand">
         <h1>Lavender<br>House</h1>
         <div class="stripe" id="brandStripe"></div>
-        <p>A first-person life sim about chosen family. You've just moved into a queer share house in Gqeberha. Four housemates already live here, with their own needs, moods, routines and opinions. They'll get on with their lives whether you're watching or not, and they'll talk back when you talk to them.</p>
+        <p>A life sim about chosen family. You've just moved into a queer share house in Gqeberha. Four housemates already live here, with their own needs, moods, routines and opinions. They'll get on with their lives whether you're watching or not, and they'll talk back when you talk to them.</p>
         <div class="mates" id="mates"></div>
       </div>
       <form class="create" id="createForm">
@@ -246,6 +307,7 @@ form.create select option{background:var(--ink)}
         <label for="pAbout">About you (optional, your housemates will know this)
           <textarea id="pAbout" rows="2" maxlength="220" placeholder="e.g. Trans lesbian, just moved from Joburg, works nights at a community radio station"></textarea>
         </label>
+        <div class="look" id="look" aria-label="Your look"></div>
         <div>
           <label id="flagLabel">Flag for the garden pole · <span id="flagName"></span></label>
           <div class="flags" id="flags" role="group" aria-labelledby="flagLabel"></div>
@@ -254,6 +316,7 @@ form.create select option{background:var(--ink)}
           <button type="submit" class="primary" id="moveIn">Move in</button>
           <button type="button" class="ghost" id="continueBtn" hidden></button>
         </div>
+        <p class="fine" id="overNote" hidden>Starting over replaces your saved game.</p>
         <p class="fine">Housemates reply with live AI when you chat; the first message asks your permission. If it's off, they use built-in lines. Your game saves in this browser.</p>
       </form>
     </div>
@@ -397,7 +460,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0xbfe3ff, 35, 120);
-const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 400);
+const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 400);
 camera.rotation.order = 'YXZ';
 const CX = GW * T / 2, CZ = GH * T / 2;
 const hemi = new THREE.HemisphereLight(0xdfeeff, 0x8a7560, 0.6); scene.add(hemi);
@@ -863,8 +926,13 @@ const P = {
   name: 'Sam', pron: 'they/them', gender: 'nonbinary', about: '', flag: 'progress',
   x: tc(10), z: tc(7), yaw: Math.PI, pitch: 0,
   needs: { hunger: 70, energy: 75, bladder: 70, hygiene: 75, fun: 60, social: 50 },
-  action: null, warned: {}, step: 0, bobAmt: 0
+  action: null, warned: {}, step: 0, bobAmt: 0, face: Math.PI,
+  look: { skin: '#c08560', hair: '#7a6ad8', hairStyle: 'short', shirt: '#ff8fb1' }
 };
+const SETTINGS_KEY = 'lavender-house-settings';
+const SETTINGS = { view: 'third', dist: 3.2, sens: 1, invert: false };
+try { Object.assign(SETTINGS, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')); } catch (_) {}
+function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(SETTINGS)); } catch (_) {} }
 function playerTile() { return [toTile(P.x), toTile(P.z)]; }
 function playerBusy() { return !!P.action; }
 
@@ -1227,14 +1295,21 @@ const keys = {};
 let hudOn = false, locked = false;
 const isTouch = matchMedia('(pointer: coarse)').matches;
 const menuEl = $('#interactMenu'), chatEl = $('#chat');
-const uiOpen = () => !menuEl.hidden || !chatEl.hidden || !hudOn;
+const pauseEl = $('#pause');
+const uiOpen = () => !menuEl.hidden || !chatEl.hidden || !pauseEl.hidden || !hudOn;
+let pauseOpenedAt = 0, selfUnlock = false;
 addEventListener('keydown', e => {
   const tag = (e.target && e.target.tagName) || '';
   const typing = (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') && e.target.offsetParent !== null;
   if (typing) { if (e.key === 'Escape' && !chatEl.hidden) closeChat(); return; }
   if (!hudOn) return;
+  if (!pauseEl.hidden) {
+    if (e.key === 'Escape' && performance.now() - pauseOpenedAt > 300) { if ($('#pauseMain').hidden) showPausePanel('main'); else closePause(true); }
+    return;
+  }
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   keys[e.code] = true;
+  if (e.key === 'Escape' && menuEl.hidden) { openPause(); return; }
   if (!menuEl.hidden) {
     if (e.key === 'Escape') { closeMenu(true); return; }
     const n = parseInt(e.key, 10); if (n) { const btn = menuEl.querySelectorAll('button')[n - 1]; if (btn && !btn.disabled) btn.click(); }
@@ -1243,22 +1318,29 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyE') useTarget();
   if (e.code === 'KeyT') talkTarget();
   if (e.code === 'Space' && P.action) stopPlayerAction();
+  if (e.code === 'KeyV') { setView(SETTINGS.view === 'third' ? 'first' : 'third'); log(SETTINGS.view === 'third' ? 'Camera: behind you.' : 'Camera: first person.'); }
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
-canvas.addEventListener('click', () => {
-  if (!hudOn || uiOpen() || isTouch) return;
-  try { const r = canvas.requestPointerLock && canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {}
+function requestLock() { if (isTouch) return; try { const r = canvas.requestPointerLock && canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} }
+canvas.addEventListener('click', () => { if (!hudOn || uiOpen()) return; requestLock(); });
+document.addEventListener('pointerlockchange', () => {
+  const was = locked; locked = document.pointerLockElement === canvas; $('#hint').hidden = locked || isTouch;
+  if (was && !locked) { if (selfUnlock) selfUnlock = false; else if (hudOn && !uiOpen()) openPause(); }
 });
-document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === canvas; $('#hint').hidden = locked; });
+canvas.addEventListener('wheel', e => {
+  if (!hudOn || uiOpen() || SETTINGS.view !== 'third') return;
+  e.preventDefault(); SETTINGS.dist = clamp(SETTINGS.dist + e.deltaY * 0.0025, 1.6, 5); saveSettings();
+}, { passive: false });
+const pitchMax = () => SETTINGS.view === 'third' ? 0.85 : 1.35;
 let drag = null;
 canvas.addEventListener('pointerdown', e => { if (!hudOn || uiOpen()) return; if (!locked) drag = { x: e.clientX, y: e.clientY, id: e.pointerId }; });
 addEventListener('pointerup', e => { if (drag && drag.id === e.pointerId) drag = null; });
 addEventListener('mousemove', e => {
-  if (locked) { P.yaw -= e.movementX * 0.0023; P.pitch = clamp(P.pitch - e.movementY * 0.0023, -1.35, 1.35); }
+  if (locked) { const k = 0.0023 * SETTINGS.sens; P.yaw -= e.movementX * k; P.pitch = clamp(P.pitch - e.movementY * k * (SETTINGS.invert ? -1 : 1), -1.3, pitchMax()); }
 });
 canvas.addEventListener('pointermove', e => {
-  if (drag && drag.id === e.pointerId && !locked) { P.yaw -= (e.clientX - drag.x) * 0.005; P.pitch = clamp(P.pitch - (e.clientY - drag.y) * 0.005, -1.35, 1.35); drag.x = e.clientX; drag.y = e.clientY; }
+  if (drag && drag.id === e.pointerId && !locked) { const k = 0.005 * SETTINGS.sens; P.yaw -= (e.clientX - drag.x) * k; P.pitch = clamp(P.pitch - (e.clientY - drag.y) * k * (SETTINGS.invert ? -1 : 1), -1.3, pitchMax()); drag.x = e.clientX; drag.y = e.clientY; }
 });
 // touch joystick
 const stick = $('#stick'), knob = stick.querySelector('i'); let stickV = { x: 0, y: 0 }, stickId = null, stickO = null;
@@ -1275,13 +1357,24 @@ let target = null;
 function updateTarget() {
   target = null;
   if (P.action) return;
-  ray.setFromCamera({ x: 0, y: 0 }, camera);
+  const third = SETTINGS.view === 'third';
+  ray.setFromCamera({ x: 0, y: 0 }, camera); ray.far = (third ? camDistNow : 0) + 3.2;
   const simGroups = sims.map(s => s.mesh.g);
   const hits = ray.intersectObjects(interactables.concat(simGroups, wallMeshes), true);
   for (const h of hits) {
-    if (h.object.userData.sim) { target = { sim: h.object.userData.sim }; break; }
-    if (h.object.userData.obj) { target = { obj: h.object.userData.obj }; break; }
-    break;
+    const ud = h.object.userData;
+    if (!ud.sim && !ud.obj) break;
+    if (dist2(h.point.x, h.point.z, P.x, P.z) > 2.5 * 2.5) { if (third && h.distance < camDistNow) continue; break; }
+    target = ud.sim ? { sim: ud.sim } : { obj: ud.obj }; break;
+  }
+  // nothing under the crosshair: pick the closest thing in front of you
+  if (!target) {
+    const fx = third ? Math.sin(P.face) : -Math.sin(P.yaw), fz = third ? Math.cos(P.face) : -Math.cos(P.yaw);
+    let best = null, bd = 1e9;
+    const consider = (x, z, maxD, t) => { const dx = x - P.x, dz = z - P.z, d = Math.hypot(dx, dz); if (d > maxD || d < 1e-3) return; if ((dx * fx + dz * fz) / d < 0.35) return; if (d < bd) { bd = d; best = t; } };
+    for (const s of sims) consider(s.x, s.z, 2.1, { sim: s });
+    for (const o of OBJECTS) { if (!o.slots) continue; for (const sl of o.slots) consider(tc(sl.t[0]), tc(sl.t[1]), 1.0, { obj: o }); consider(o.ax, o.az, 1.7, { obj: o }); }
+    target = best;
   }
   // a friend who is greeting you is always targetable when close
   if (!target) { const g = sims.find(s => s.state === 'greeting' && dist2(s.x, s.z, P.x, P.z) < 2.6 * 2.6); if (g) target = { sim: g, greet: true }; }
@@ -1306,6 +1399,7 @@ function startPlayerAction(o) {
   const i = freeSlot(o, 'player');
   if (i < 0) { const s = o.slots.find(sl => sl.owner && sl.owner !== 'player'); log(s && !o.users.some(Boolean) ? `That's ${o.name.replace("'s bed", '')}'s bed. Yours is the futon in the shared room.` : `${o.name} is in use right now.`); return; }
   o.users[i] = 'player'; P.action = { o, i, el: 0 };
+  const sl = o.slots[i]; if (walkable(sl.t[0], sl.t[1]) || (sl.t[0] === toTile(P.x) && sl.t[1] === toTile(P.z))) { P.x = tc(sl.t[0]); P.z = tc(sl.t[1]); }
   $('#actionBar').hidden = false; $('#actionText').textContent = o.ing + '…';
   if (o.tags.includes('sleep')) $('#sleepShade').hidden = false;
 }
@@ -1484,15 +1578,15 @@ async function sendChat() {
   if (feel >= 2) log(`${s.name} really enjoyed that.`); else if (feel <= -2) log(`${s.name} seemed hurt by that.`);
   chatBusy = false; $('#chatSend').disabled = false; chatInput.focus(); scheduleSave();
 }
-function releaseLock() { try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {} for (const k in keys) keys[k] = false; }
+function releaseLock() { try { if (document.pointerLockElement) { selfUnlock = true; document.exitPointerLock(); } } catch (_) {} for (const k in keys) keys[k] = false; }
 
 /* ================= SAVE ================= */
 const SAVE_KEY = 'lavender-house-v1';
 function serialize() {
-  return JSON.stringify({ v: 1, gameMin, P: { name: P.name, pron: P.pron, gender: P.gender, about: P.about, flag: P.flag, x: P.x, z: P.z, yaw: P.yaw, needs: P.needs },
+  return JSON.stringify({ v: 1, gameMin, P: { name: P.name, pron: P.pron, gender: P.gender, about: P.about, flag: P.flag, x: P.x, z: P.z, yaw: P.yaw, face: P.face, look: P.look, needs: P.needs },
     sims: sims.map(s => ({ id: s.id, needs: s.needs, relP: s.relP, romP: s.romP, rel: s.rel, memories: s.memories, chat: s.chat, tile: s.tile })) });
 }
-function save() { if (!hudOn) return; try { localStorage.setItem(SAVE_KEY, serialize()); } catch (_) {} }
+function save() { if (!hudOn) return false; try { localStorage.setItem(SAVE_KEY, serialize()); return true; } catch (_) { return false; } }
 let saveTimer = null; function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 800); }
 function loadSave() { try { const t = localStorage.getItem(SAVE_KEY); return t ? JSON.parse(t) : null; } catch (_) { return null; } }
 setInterval(save, 20000);
@@ -1511,8 +1605,38 @@ Object.keys(FLAGS).forEach(id => {
 });
 $('#flagName').textContent = FLAGS[chosenFlag].name; setFlag(chosenFlag);
 $('#pPron').addEventListener('change', e => { $('#customWrap').hidden = e.target.value !== 'custom'; });
-const existing = loadSave();
-if (existing && existing.P) { const c = $('#continueBtn'); c.hidden = false; c.textContent = `Continue as ${existing.P.name}`; c.addEventListener('click', () => begin(existing)); $('#moveIn').textContent = 'Start over'; }
+const LOOKS = {
+  skin: { label: 'Skin', opts: ['#f6d3b8', '#e0ad86', '#c08560', '#8a5a3c', '#5e3a26'] },
+  hair: { label: 'Hair colour', opts: ['#1c1412', '#5a3a22', '#d9a441', '#c94f7c', '#7a6ad8', '#3fa7a0', '#eae6df'] },
+  hairStyle: { label: 'Hair', opts: [['short', 'Short'], ['long', 'Long'], ['curls', 'Curls'], ['bun', 'Bun']] },
+  shirt: { label: 'Top', opts: ['#ff8fb1', '#7fe0b8', '#5bcefa', '#ffd45e', '#ff8f6b', '#f5efff', '#2d3550'] }
+};
+const lookEl = $('#look');
+function renderLook() {
+  lookEl.innerHTML = '';
+  for (const k in LOOKS) {
+    const row = document.createElement('div'); row.className = 'lookRow'; row.setAttribute('role', 'group');
+    const lab = document.createElement('span'); lab.textContent = LOOKS[k].label; lab.id = 'look-' + k; row.setAttribute('aria-labelledby', lab.id); row.append(lab);
+    LOOKS[k].opts.forEach((o, i) => {
+      const b = document.createElement('button'); b.type = 'button';
+      const val = Array.isArray(o) ? o[0] : o;
+      if (Array.isArray(o)) { b.className = 'seg'; b.textContent = o[1]; } else { b.className = 'swatch'; b.style.background = o; b.setAttribute('aria-label', `${LOOKS[k].label} ${i + 1}`); }
+      b.setAttribute('aria-pressed', String(P.look[k] === val));
+      b.addEventListener('click', () => { P.look[k] = val; row.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
+      row.append(b);
+    });
+    lookEl.append(row);
+  }
+}
+renderLook();
+function refreshStart() {
+  const ex = loadSave(); const c = $('#continueBtn');
+  const has = !!(ex && ex.P);
+  c.hidden = !has; $('#overNote').hidden = !has; $('#moveIn').textContent = has ? 'Start over' : 'Move in';
+  if (has) c.textContent = `Continue as ${ex.P.name}`;
+}
+$('#continueBtn').addEventListener('click', () => { const ex = loadSave(); if (ex && ex.P) begin(ex); });
+refreshStart();
 $('#createForm').addEventListener('submit', e => {
   e.preventDefault();
   const pron = $('#pPron').value === 'custom' ? ($('#pPronCustom').value.trim() || 'they/them') : $('#pPron').value;
@@ -1537,14 +1661,118 @@ function begin(saveData) {
     log(`Moving day! Welcome to Lavender House, ${P.name}.`);
     setTimeout(() => log('Mia hung your flag on the garden pole.'), 1500);
   }
+  if (!saveData) { P.face = Math.PI; P.pitch = -0.2; }
+  P.look = Object.assign({ skin: '#c08560', hair: '#7a6ad8', hairStyle: 'short', shirt: '#ff8fb1' }, P.look);
+  buildPlayerMesh();
   setFlag(P.flag);
   $('#meName').textContent = P.name; $('#mePron').textContent = P.pron;
   buildSimList(); $('#start').hidden = true; $('#hud').hidden = false; hudOn = true;
   $('#touch').hidden = !isTouch; if (isTouch) $('#hint').hidden = true;
   setSpeed(1); save();
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  if (!isTouch) { try { const r = canvas.requestPointerLock && canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} }
+  requestLock();
 }
+
+/* ================= PLAYER AVATAR ================= */
+let playerMesh = null;
+const PA = { mesh: null, x: 0, z: 0, rot: 0, state: 'idle', pose: 'stand', phase: 0 };
+function buildPlayerMesh() {
+  if (playerMesh) scene.remove(playerMesh.g);
+  playerMesh = buildSimMesh({ id: 'player', shirt: P.look.shirt, pants: '#2d3550', skin: P.look.skin, hair: P.look.hair, hairStyle: P.look.hairStyle });
+  PA.mesh = playerMesh;
+}
+function animatePlayer(dt) {
+  if (!playerMesh) return;
+  if (P.action) {
+    const o = P.action.o, sl = o.slots[P.action.i];
+    PA.state = 'acting'; PA.pose = sl.pose || o.pose || 'use';
+    if (sl.snap) { PA.x = tc(sl.snap[0]); PA.z = tc(sl.snap[1]); } else { PA.x = P.x; PA.z = P.z; }
+    PA.rot = sl.face !== undefined ? sl.face : Math.atan2(o.ax - PA.x, o.az - PA.z);
+  } else {
+    PA.state = P.bobAmt > 0.05 ? 'walking' : 'idle'; PA.pose = 'stand';
+    PA.x = P.x; PA.z = P.z; PA.rot = P.face; PA.phase = P.step * 1.45;
+  }
+  Sim.prototype.animate.call(PA, dt);
+  playerMesh.g.visible = hudOn && SETTINGS.view === 'third' && camDistNow > 1.0;
+}
+
+/* ================= CAMERA ================= */
+let camDistNow = 3.2, camBlockers = null;
+const camRay = new THREE.Raycaster(), _piv = new THREE.Vector3(), _dir = new THREE.Vector3();
+function setView(v) {
+  SETTINGS.view = v; saveSettings();
+  P.pitch = clamp(P.pitch, -1.3, pitchMax());
+  $('#sThird').setAttribute('aria-pressed', String(v === 'third')); $('#sFirst').setAttribute('aria-pressed', String(v === 'first'));
+}
+function updateCamera(dt) {
+  const third = hudOn && SETTINGS.view === 'third';
+  const fov = third || !hudOn ? 60 : 70;
+  if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); }
+  camera.rotation.set(P.pitch, P.yaw, 0);
+  if (!hudOn) { camera.position.set(P.x, 2.0, P.z); return; }
+  const sleeping = P.action && P.action.o.tags.includes('sleep');
+  if (!third) {
+    const bob = Math.sin(P.step) * 0.035 * P.bobAmt;
+    camera.position.set(P.x, (sleeping ? 0.6 : 1.62) + bob, P.z); camDistNow = 0; return;
+  }
+  if (!camBlockers) { camBlockers = wallMeshes.slice(); scene.children.forEach(m => { if (m.isMesh && m.material === glassMat) camBlockers.push(m); }); }
+  const pivY = PA.state === 'acting' ? (PA.pose === 'lie' ? 0.9 : PA.pose === 'sit' ? 1.2 : 1.5) : 1.5;
+  _piv.set(PA.x, pivY, PA.z);
+  const cp = Math.cos(P.pitch), fx = -Math.sin(P.yaw) * cp, fy = Math.sin(P.pitch), fz = -Math.cos(P.yaw) * cp;
+  const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
+  const want = SETTINGS.dist, sh = 0.42 * Math.min(1, want / 3);
+  _dir.set(rx * sh - fx * want, 0.18 - fy * want, rz * sh - fz * want);
+  const len = _dir.length(); _dir.divideScalar(len);
+  camRay.set(_piv, _dir); camRay.far = len + 0.3;
+  const hit = camRay.intersectObjects(camBlockers, false)[0];
+  const d = hit ? Math.max(0.15, hit.distance - 0.3) : len;
+  camDistNow = d < camDistNow ? d : camDistNow + (d - camDistNow) * (1 - Math.exp(-dt * 5));
+  const pos = camera.position.copy(_piv).addScaledVector(_dir, camDistNow);
+  const inside = pos.z > 4 * T + 0.1 && pos.z < (GH - 1) * T && pos.x > T && pos.x < (GW - 1) * T;
+  if (inside) pos.y = Math.min(pos.y, WH - 0.22);
+  pos.y = Math.max(pos.y, 0.35);
+}
+
+/* ================= PAUSE MENU ================= */
+function showPausePanel(which) {
+  $('#pauseMain').hidden = which !== 'main'; $('#pauseSettings').hidden = which !== 'settings'; $('#pauseBye').hidden = which !== 'bye';
+  const f = { main: '#pResume', settings: '#sBack', bye: '#byeTitle' }[which]; setTimeout(() => $(f).focus(), 0);
+}
+function openPause() {
+  if (!hudOn || !pauseEl.hidden) return;
+  if (!chatEl.hidden) closeChat();
+  if (!menuEl.hidden) closeMenu(true);
+  releaseLock();
+  $('#pauseSub').textContent = `${P.name} · Day ${dayOf()} · ${clockStr()}`; $('#pNote').textContent = '';
+  showPausePanel('main'); pauseEl.hidden = false; pauseOpenedAt = performance.now();
+}
+function closePause(relock) { pauseEl.hidden = true; if (relock) requestLock(); }
+function goToTitle() {
+  save();
+  stopPlayerAction();
+  if (!chatEl.hidden) closeChat();
+  if (!menuEl.hidden) closeMenu(true);
+  pauseEl.hidden = true; hudOn = false;
+  $('#hud').hidden = true; $('#sleepShade').hidden = true; $('#prompt').hidden = true;
+  $('#pName').value = P.name; renderLook();
+  P.pitch = 0; setSpeed(1); refreshStart();
+  const st = $('#start'); st.hidden = false; st.scrollTop = 0;
+}
+$('#menuBtn').addEventListener('click', openPause);
+$('#pResume').addEventListener('click', () => closePause(true));
+$('#pSave').addEventListener('click', () => { $('#pNote').textContent = save() ? `Saved · Day ${dayOf()}, ${clockStr()}` : "Couldn't save. This browser is blocking storage for the game."; });
+$('#pSettings').addEventListener('click', () => showPausePanel('settings'));
+$('#pMain').addEventListener('click', goToTitle);
+$('#pExit').addEventListener('click', () => { save(); showPausePanel('bye'); });
+$('#byeTitle').addEventListener('click', goToTitle);
+$('#sBack').addEventListener('click', () => showPausePanel('main'));
+$('#sThird').addEventListener('click', () => setView('third'));
+$('#sFirst').addEventListener('click', () => setView('first'));
+const sDist = $('#sDist'), sSens = $('#sSens'), sInv = $('#sInvert');
+sDist.value = SETTINGS.dist; sSens.value = SETTINGS.sens; sInv.checked = !!SETTINGS.invert; setView(SETTINGS.view);
+sDist.addEventListener('input', () => { SETTINGS.dist = +sDist.value; saveSettings(); });
+sSens.addEventListener('input', () => { SETTINGS.sens = +sSens.value; saveSettings(); });
+sInv.addEventListener('change', () => { SETTINGS.invert = sInv.checked; saveSettings(); });
 
 /* ================= LIGHTING ================= */
 const C = h => new THREE.Color(h);
@@ -1612,9 +1840,8 @@ function frame(now) {
     // attract mode: slow orbit through the house
     P.yaw += dt * 0.08; gameMin += dt * 4;
   }
-  const bob = hudOn ? Math.sin(P.step) * 0.035 * P.bobAmt : 0;
-  camera.position.set(P.x, (hudOn ? (P.action && P.action.o.tags.includes('sleep') ? 0.6 : 1.62) : 2.0) + bob, P.z);
-  camera.rotation.set(P.pitch, P.yaw, 0);
+  animatePlayer(dt);
+  updateCamera(dt);
   sky.position.copy(camera.position); stars.position.copy(camera.position);
   if (flagMesh) { const pos = flagMesh.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { const x = pos.getX(i); pos.setZ(i, Math.sin(now / 400 + x * 3) * 0.08 * (x + 0.85)); } pos.needsUpdate = true; }
   updateLight(now);
@@ -1637,6 +1864,7 @@ function movePlayer(dt) {
   const sp = (keys.ShiftLeft || keys.ShiftRight ? 5 : 3.1) * dt;
   const sx = -Math.sin(P.yaw), sz = -Math.cos(P.yaw), rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
   const mx = (sx * fz + rx * fx) * sp, mz = (sz * fz + rz * fx) * sp;
+  P.face = lerpAngle(P.face, Math.atan2(mx, mz), Math.min(1, dt * 12));
   if (freeAt(P.x + mx, P.z)) P.x += mx;
   if (freeAt(P.x, P.z + mz)) P.z += mz;
 }
@@ -1657,7 +1885,7 @@ function positionLabels(checkOcc) {
   }
 }
 requestAnimationFrame(frame);
-window.LavenderHouse = { P, sims, setTime: m => { gameMin = m; }, wallMeshes, camera, THREE };
+window.LavenderHouse = { P, sims, setTime: m => { gameMin = m; }, wallMeshes, camera, THREE, SETTINGS };
 })();
 </script>
 

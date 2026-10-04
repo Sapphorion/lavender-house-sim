@@ -2,7 +2,7 @@
 
 A first-person life sim about chosen family, made for an LGBTQIA+ audience.
 
-You've just moved into a queer share house in Gqeberha, South Africa. Four housemates already live there. They have their own needs, moods, routines, relationships and opinions, and they get on with their lives whether you're watching or not. Walk around in first person, look after yourself, and get to know them. When you talk to them, they talk back.
+You've just moved into a queer share house in Gqeberha, South Africa. Four housemates already live there. They have their own needs, moods, routines, relationships and opinions, and they get on with their lives whether you're watching or not. Walk around with the camera behind your character (or switch to first person), look after yourself, and get to know them. When you talk to them, they talk back.
 
 ## Play
 
@@ -10,13 +10,16 @@ Open `index.html` in a browser, or enable GitHub Pages for this repo (Settings �
 
 | Action | Desktop | Phone |
 | --- | --- | --- |
-| Look around | Move the mouse (the game grabs it when you move in; click the view to grab it again), or drag | Drag on the screen |
+| Look around / turn the camera | Move the mouse (the game grabs it when you move in; click the view to grab it again), or drag | Drag on the screen |
+| Zoom the camera | Scroll wheel | — |
+| Switch between behind-you and first-person camera | `V` | Menu → Settings |
 | Move | `W` `A` `S` `D`, or `↑` `↓`; `Shift` to sprint | Joystick |
 | Turn without the mouse | `←` `→` | — |
 | Use an object or interact with a housemate | `E` | **Use** |
 | Chat with a housemate | `T` | **Talk** |
 | Stop what you're doing | Move, or `Space` | Move |
-| Free the mouse / close a menu | `Esc` | — |
+| Pause menu (resume, save, settings, main menu, exit) | `Esc` or the **Menu** button | **Menu** button |
+| Close an interaction menu or chat | `Esc` | **Done** |
 
 Game speed (pause, 1×, 3×, 8×) is in the clock panel. Time speeds up while you're busy with an activity, and a lot while you sleep. The game saves in your browser.
 
@@ -29,7 +32,7 @@ Game speed (pause, 1×, 3×, 8×) is in the clock panel. Time speeds up while yo
 | Ren Adeyemi | they/them | Nonbinary, pansexual painter and part-time barista. Night owl. Single. |
 | Kai Naidoo | he/him | Gay QA tester at a game studio. Shy, then fiercely loyal. Single. |
 
-You create your own character: name, pronouns (including neopronouns or custom pronouns), gender, an optional "about you" line your housemates will know, and which Pride flag flies on the garden pole (12 to choose from).
+You create your own character: name, pronouns (including neopronouns or custom pronouns), gender, skin tone, hair, top colour, an optional "about you" line your housemates will know, and which Pride flag flies on the garden pole (12 to choose from).
 
 ## How it works
 
@@ -44,7 +47,7 @@ You create your own character: name, pronouns (including neopronouns or custom p
 - [ ] Live AI replies outside claude.ai (a small server holding the API key, so the key never ships in public code)
 - [ ] Multiplayer: friends join the same house as live housemates alongside the AI ones
 - [ ] More rooms, objects and household events (Pride march prep, family dinners, load shedding nights)
-- [ ] Customisable appearance for your character
+- [ ] More appearance options (outfits, accessories, body shapes)
 - [ ] Careers, skills and longer-term goals
 
 ## Tech
