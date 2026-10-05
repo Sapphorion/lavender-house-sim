@@ -1,6 +1,6 @@
 # Lavender House
 
-A first-person life sim about chosen family, made for an LGBTQIA+ audience.
+A life sim about chosen family, made for an LGBTQIA+ audience.
 
 You've just moved into a queer share house in Gqeberha, South Africa. Four housemates already live there. They have their own needs, moods, routines, relationships and opinions, and they get on with their lives whether you're watching or not. Walk around with the camera behind your character (or switch to first person), look after yourself, and get to know them. When you talk to them, they talk back.
 
